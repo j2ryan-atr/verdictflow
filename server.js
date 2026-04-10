@@ -4,7 +4,7 @@ const path = require('path');
 const app = express();
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(__dirname));
 
 const AT_TOKEN = process.env.AIRTABLE_TOKEN;
 const AT_BASE  = process.env.AIRTABLE_BASE_ID || 'appZcKc43KfFhOUad';
