@@ -10,6 +10,7 @@ const AT_TOKEN = process.env.AIRTABLE_TOKEN;
 const AT_BASE  = process.env.AIRTABLE_BASE_ID || 'appZcKc43KfFhOUad';
 const AT_TABLE = process.env.AIRTABLE_TABLE   || 'Data';
 const DP_KEY   = process.env.DOCUPILOT_API_KEY;
+const DP_TMPL  = process.env.DOCUPILOT_DEFAULT_TEMPLATE || '105678';
 
 app.get('/api/airtable', async (req, res) => {
   try {
@@ -46,7 +47,8 @@ app.get('/api/docupilot', async (req, res) => {
 app.post('/api/docupilot', async (req, res) => {
   try {
     const { templateId, data: docData, format } = req.body;
-    const r = await fetch(`https://api.docupilot.app/api/v1/templates/${templateId}/create-document/`, {
+    const tmpl = templateId || DP_TMPL;
+    const r = await fetch(`https://api.docupilot.app/api/v1/templates/${tmpl}/create-document/`, {
       method: 'POST',
       headers: { 'X-Auth-Token': DP_KEY, 'Content-Type': 'application/json' },
       body: JSON.stringify({ data: docData, output_type: format || 'pdf' })
@@ -66,32 +68,37 @@ app.post('/api/pipeline', async (req, res) => {
     const record = atData.records[0];
     const f = record.fields;
     const mapped = {
-      client_first_name: f['First Name']||'',
-      client_last_name:  f['Last Name']||'',
-      client_middle:     f['Middle Name']||'',
-      ticket_num:        f['Other']||f['Ticket ID']||'',
-      violation:         f['Notes']||'',
-      court_date:        f['Court Date']||f['Citation Date']||'',
-      court_name:        f['Court']||'',
-      county:            f['County']||'',
-      ticket_type:       f['Ticket Type']||'',
-      source:            f['Source']||'',
-      ...f
+      First_Name    : f['First Name']      || '',
+      Middle_Name   : f['Middle Name']     || '',
+      Last_Name     : f['Last Name']       || '',
+      Other         : f['Other']           || f['Ticket ID'] || '',
+      Court_Date    : f['Court Date']      || f['Citation Date'] || '',
+      Citation_Date : f['Citation Date']   || '',
+      Court         : f['Court']           || '',
+      County        : f['County']          || '',
+      Ticket_Type   : f['Ticket Type']     || '',
+      Notes         : f['Notes']           || '',
+      Source        : f['Source']          || '',
+      Contact_Date  : f['Contact Date']    || '',
+      date          : new Date().toLocaleDateString('en-US'),
     };
     const steps = [
       '✓ Airtable record fetched: ' + record.id,
-      '✓ ' + Object.keys(mapped).length + ' fields mapped',
-      '✓ Client: ' + (f['First Name']||'') + ' ' + (f['Last Name']||'')
+      '✓ Client: ' + mapped.First_Name + ' ' + mapped.Last_Name,
+      '✓ Citation: ' + mapped.Other,
+      '✓ ' + Object.keys(mapped).length + ' fields mapped to Docupilot variables',
     ];
-    const tmplId = req.body.templateId || process.env.DOCUPILOT_DEFAULT_TEMPLATE;
-    if(!tmplId) return res.json({ success: true, steps, airtableRecord: record.id, warning: 'No template ID set' });
+    const tmplId = req.body.templateId || DP_TMPL;
+    if(!tmplId) return res.json({ success: true, steps, airtableRecord: record.id, warning: 'No template ID' });
+    steps.push('Sending to Docupilot template ' + tmplId + '...');
     const dpR = await fetch(`https://api.docupilot.app/api/v1/templates/${tmplId}/create-document/`, {
       method: 'POST',
       headers: { 'X-Auth-Token': DP_KEY, 'Content-Type': 'application/json' },
       body: JSON.stringify({ data: mapped, output_type: 'pdf' })
     });
     const dpData = await dpR.json();
-    steps.push('✓ Document generated');
+    if(dpData.error) throw new Error('Docupilot: ' + JSON.stringify(dpData.error));
+    steps.push('✓ Document generated successfully');
     res.json({ success: true, steps, airtableRecord: record.id, document: dpData });
   } catch(e) { res.status(500).json({ success: false, error: e.message }); }
 });
@@ -100,4 +107,4 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-app.listen(process.env.PORT || 3000, () => console.log('VerdictFlow running'));
+app.listen(process.env.PORT || 3000, () => console.log('VerdictFlow running on port', process.env.PORT || 3000));
