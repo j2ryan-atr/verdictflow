@@ -354,7 +354,7 @@ html,body{height:100%;font-family:'Figtree',sans-serif;background:var(--bg);colo
               <div id="dp-badge" style="margin-left:auto"></div>
             </div>
             <div class="abb">
-              <div class="fg"><label>Default Template ID</label><input type="text" id="dp-tmpl-id" placeholder="Enter your Docupilot template ID"/></div>
+              <div class="fg"><label>Default Template ID</label><input type="text" id="dp-tmpl-id" value="105678"/></div>
               <button class="btn btn-p btn-sm" style="width:100%;justify-content:center" onclick="testDP()">Test Docupilot Connection</button>
               <div class="res" id="r-dp"></div>
             </div>
@@ -484,12 +484,12 @@ const panelTitles = {
 };
 
 const defaultMappings = [
-  ['First Name','client_first_name'],['Last Name','client_last_name'],
-  ['Middle Name','client_middle'],['Contact Date','contact_date'],
-  ['Citation Date','citation_date'],['Court Date','court_date'],
-  ['Ticket Type','ticket_type'],['County','county'],
-  ['Court','court_name'],['Notes','violation'],
-  ['Source','source'],['Other','ticket_num'],
+  ['First Name','First_Name'],['Last Name','Last_Name'],
+  ['Middle Name','Middle_Name'],['Contact Date','Contact_Date'],
+  ['Citation Date','Citation_Date'],['Court Date','Court_Date'],
+  ['Ticket Type','Ticket_Type'],['County','county'],
+  ['Court','Court'],['Notes','violation'],
+  ['Source','source'],['Other','Other'],
 ];
 
 let allTickets = [];
@@ -566,7 +566,7 @@ function renderDash() {
     const f = r.fields;
     const fn = getField(f,'First Name','first_name','Name','Client');
     const ln = getField(f,'Last Name','last_name','');
-    const ticket = getField(f,'Citation Number','Ticket Number','ticket_num','ID');
+    const ticket = getField(f,'Citation Number','Ticket Number','Other','ID');
     const viol = getField(f,'Violation Type','Violation','violation');
     return `<tr>
       <td><div style="display:flex;align-items:center;gap:8px"><div class="av">${ini(fn,ln)}</div>${fn} ${ln}</div></td>
@@ -596,9 +596,9 @@ function renderTickets(filter=''){
     const f=r.fields;
     const fn=getField(f,'First Name','first_name','Name','Client');
     const ln=getField(f,'Last Name','last_name','');
-    const ticket=getField(f,'Other','Citation Number','Ticket Number','ticket_num','Ticket ID');
+    const ticket=getField(f,'Other','Citation Number','Ticket Number','Other','Ticket ID');
     const viol=getField(f,'Notes','Violation Type','Violation','violation');
-    const court=getField(f,'Court Date','court_date');
+    const court=getField(f,'Court Date','Court_Date');
     return`<tr>
       <td><div style="display:flex;align-items:center;gap:8px"><div class="av">${ini(fn,ln)}</div><div><div style="font-weight:500">${fn} ${ln}</div><div style="font-size:11px;color:var(--muted)">${getField(f,'Email','email')}</div></div></div></td>
       <td><span class="tnum">${ticket||r.id}</span></td>
@@ -620,13 +620,13 @@ async function generateForRecord(recordId, name) {
   if(!record)return;
   const f = record.fields;
   const docData = {
-    client_first_name: getField(f,'First Name','first_name'),
-    client_last_name:  getField(f,'Last Name','last_name'),
+    First_Name: getField(f,'First Name','first_name'),
+    Last_Name:  getField(f,'Last Name','last_name'),
     client_email:      getField(f,'Email','email'),
-    ticket_num:        getField(f,'Citation Number','Ticket Number'),
+    Other:        getField(f,'Citation Number','Ticket Number'),
     violation:         getField(f,'Violation Type','Violation'),
-    court_date:        getField(f,'Court Date','court_date'),
-    court_name:        getField(f,'Jurisdiction','Court'),
+    Court_Date:        getField(f,'Court Date','Court_Date'),
+    Court:        getField(f,'Jurisdiction','Court'),
     officer:           getField(f,'Issuing Officer','Officer'),
     notes:             getField(f,'Notes','notes'),
     ...f
