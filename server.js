@@ -10,7 +10,7 @@ const AT_TOKEN = process.env.AIRTABLE_TOKEN;
 const AT_BASE  = process.env.AIRTABLE_BASE_ID || 'appZcKc43KfFhOUad';
 const AT_TABLE = process.env.AIRTABLE_TABLE   || 'Data';
 const DP_KEY   = process.env.DOCUPILOT_API_KEY;
-const DP_TMPL  = process.env.DOCUPILOT_DEFAULT_TEMPLATE || '105678';
+const DP_TMPL  = process.env.DOCUPILOT_DEFAULT_TEMPLATE || '105675';
 
 app.get('/api/airtable', async (req, res) => {
   try {
