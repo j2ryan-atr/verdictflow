@@ -774,9 +774,13 @@ async function doGenerate() {
     showRes('r-new','ld','⏳ Step 3/3 — Finalizing…');
     await loadTickets();
     setTimeout(()=>{
-      const link=docData.document_url||docData.url||docData.download_url||'';
-      if(link) showRes('r-new','ok',`✓ Done! Record saved and document generated.\n\nDownload: ${link}`);
-      else showRes('r-new','ok',`✓ Done! Record saved for ${fname} ${lname}.\nAirtable ID: ${atData.id}\nDocument queued in Docupilot — check your dashboard.`);
+      const link = (docData.data && docData.data.file_url) || docData.file_url || docData.document_url || docData.url || '';
+      if(link) {
+        showRes('r-new','ok','✓ Done! Document generated for ' + fname + ' ' + lname + '.\nAirtable ID: ' + atData.id);
+        setTimeout(()=>{ if(confirm('Click OK to open the PDF download link.')) window.open(link,'_blank'); }, 500);
+      } else {
+        showRes('r-new','ok','✓ Done! Record saved for ' + fname + ' ' + lname + '.\nAirtable ID: ' + atData.id + '\nCheck Docupilot for download.');
+      }
     },600);
   } catch(e){showRes('r-new','err',`✗ ${e.message}`);}
 }
