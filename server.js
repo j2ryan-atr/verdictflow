@@ -1,3 +1,4 @@
+
 const express = require('express');
 const fetch = require('node-fetch');
 const path = require('path');
@@ -10,7 +11,23 @@ const AT_TOKEN  = process.env.AIRTABLE_TOKEN;
 const AT_BASE   = process.env.AIRTABLE_BASE_ID || 'appZcKc43KfFhOUad';
 const AT_TABLE  = process.env.AIRTABLE_TABLE   || 'Data';
 const DP_KEY    = process.env.DOCUPILOT_API_KEY;
-const DP_URL    = 'https://lojr.docupilot.app/dashboard/documents/create/c190d67a/212946f7';
+const BASE = 'https://lojr.docupilot.app/dashboard/documents/create/c190d67a/';
+const DP_URLS = {
+  '105675': BASE + '212946f7', // LVJC Civil Infraction Response
+  '105696': BASE + '9dd71595', // Bunkerville CFA (Criminal)
+  '105697': BASE + 'e9a64bef', // Laughlin CFA (Criminal)
+  '105698': BASE + '238660ae', // Moapa CFA (Criminal)
+  '105699': BASE + 'ce954cdb', // Moapa Valley CFA (Criminal)
+  '105700': BASE + '12a17499', // Searchlight CFA (Criminal)
+  '105701': BASE + '818b53e3', // Goodsprings CFA (Criminal)
+  '105704': BASE + 'b4dd0dc7', // Bunkerville WEP (Civil)
+  '105705': BASE + 'ca9d4bfc', // Goodsprings WEP (Civil)
+  '105706': BASE + 'c07d5f9f', // Laughlin WEP (Civil)
+  '105707': BASE + '5f7c99e1', // Moapa WEP (Civil)
+  '105708': BASE + '91ec5015', // Moapa Valley WEP (Civil)
+  '105709': BASE + 'c7f35d9a', // Searchlight WEP (Civil)
+};
+function getDpUrl(tmplId) { return DP_URLS[tmplId] || DP_URLS['105675']; }
 
 function mapFields(f) {
   return {
@@ -65,7 +82,7 @@ app.get('/api/docupilot', async (req, res) => {
 app.post('/api/docupilot', async (req, res) => {
   try {
     const { data: docData } = req.body;
-    const url = DP_URL + '?download=true';
+    const url = getDpUrl(tmpl) + '?download=true';
     console.log('Docupilot URL:', url);
     console.log('Docupilot data:', JSON.stringify(docData));
     const r = await fetch(url, {
@@ -116,7 +133,7 @@ app.post('/api/pipeline', async (req, res) => {
       '✓ ' + Object.keys(mapped).length + ' fields mapped',
       'Sending to Docupilot...'
     ];
-    const dpR = await fetch(DP_URL + '?download=true', {
+    const dpR = await fetch(getDpUrl(tmplId) + '?download=true', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(mapped)
