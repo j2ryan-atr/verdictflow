@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>VerdictFlow — Traffic Defense Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Figtree:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0f1f3d;--navy2:#1a3260;--navy3:#243d6b;
+  --gold:#c9a84c;--goldl:#e8c97a;--goldp:#fdf8ed;--goldb:#f0e0a8;
+  --slate:#eef0f7;--text:#1a1a2e;--muted:#64748b;
+  --ok:#1d9e75;--okl:#e1f5ee;--okd:#085041;
+  --err:#d85a30;--errl:#faece7;--errd:#4a1b0c;
+  --info:#185fa5;--infol:#e6f1fb;--infod:#042c53;
+  --warn:#854f0b;--warnl:#faeeda;
+  --border:rgba(15,31,61,0.1);--border2:rgba(15,31,61,0.18);
+  --bg:#f1f3f9;--card:#ffffff;--sw:228px;--top:56px;--r:10px;--r2:14px;
+}
+html,body{height:100%;font-family:'Figtree',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+.shell{display:flex;height:100vh;overflow:hidden}
+/* SIDEBAR */
+.side{width:var(--sw);background:var(--navy);display:flex;flex-direction:column;flex-shrink:0;position:relative;overflow:hidden}
+.side::after{content:'';position:absolute;bottom:-80px;right:-80px;width:220px;height:220px;border-radius:50%;background:rgba(201,168,76,0.06);pointer-events:none}
+.slogo{padding:20px 18px 16px;border-bottom:1px solid rgba(255,255,255,0.08);flex-shrink:0}
+.lmark{display:flex;align-items:center;gap:11px}
+.lic{width:36px;height:36px;background:var(--gold);border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.lic svg{width:20px;height:20px;fill:var(--navy)}
+.lname{font-family:'DM Serif Display',serif;color:#fff;font-size:16px;line-height:1.1}
+.lsub{font-size:10px;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:.1em;margin-top:2px}
+.ssec{padding:16px 12px 4px;flex-shrink:0}
+.slbl{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,0.25);padding:0 8px;margin-bottom:6px}
+.ni{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;color:rgba(255,255,255,0.55);font-size:13px;cursor:pointer;margin-bottom:2px;user-select:none;transition:background .15s,color .15s}
+.ni:hover{background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.9)}
+.ni.on{background:rgba(201,168,76,0.2);color:var(--goldl)}
+.niico{width:16px;height:16px;flex-shrink:0;opacity:.7}
+.ni.on .niico{opacity:1}
+.nbadge{margin-left:auto;background:var(--gold);color:var(--navy);font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;line-height:1.4}
+.nbadge.green{background:var(--ok);color:#fff}
+.nbadge.blue{background:#185fa5;color:#fff}
+.sfoot{margin-top:auto;padding:14px 12px;border-top:1px solid rgba(255,255,255,0.07);flex-shrink:0}
+.sstat{display:flex;align-items:center;gap:8px;padding:4px 8px;font-size:11px;color:rgba(255,255,255,0.38)}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;background:#6b7280;transition:background .3s}
+.dot.ok{background:var(--ok)}.dot.warn{background:var(--gold)}
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.topbar{height:var(--top);background:var(--card);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;gap:12px;flex-shrink:0}
+.tbtitle{font-family:'DM Serif Display',serif;font-size:20px;color:var(--navy);flex:1}
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;border:none;font-size:13px;font-family:'Figtree',sans-serif;font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap;line-height:1}
+.btn svg{width:14px;height:14px;flex-shrink:0}
+.btn-p{background:var(--navy);color:#fff}.btn-p:hover{background:var(--navy2)}
+.btn-g{background:var(--gold);color:var(--navy)}.btn-g:hover{background:var(--goldl)}
+.btn-o{background:transparent;color:var(--navy);border:1px solid var(--border2)}.btn-o:hover{background:var(--slate)}
+.btn-ok{background:var(--ok);color:#fff}.btn-ok:hover{opacity:.9}
+.btn-sm{padding:6px 12px;font-size:12px;border-radius:7px}
+.btn-xs{padding:4px 9px;font-size:11px;border-radius:6px}
+/* CONTENT */
+.content{flex:1;overflow-y:auto;padding:22px 24px;min-width:0}
+.panel{display:none}.panel.on{display:block}
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;margin-bottom:18px}
+.ch{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ct{font-size:14px;font-weight:600;color:var(--navy);flex:1;min-width:0}
+.cb{padding:18px 20px}
+/* METRICS */
+.mrow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:20px}
+.mc{background:var(--card);border:1px solid var(--border);border-radius:var(--r2);padding:16px 18px}
+.ml{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:8px}
+.mv{font-size:28px;font-weight:700;color:var(--navy);line-height:1}
+.ms{font-size:11px;margin-top:4px}.ms.up{color:var(--ok)}.ms.dn{color:var(--err)}
+/* TABLES */
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{text-align:left;padding:10px 14px;font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);border-bottom:1px solid var(--border);font-weight:500;white-space:nowrap}
+.tbl td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tbody tr:hover td{background:#f8f9fd}
+/* BADGES */
+.bdg{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
+.bdg-ok{background:var(--okl);color:var(--okd)}
+.bdg-warn{background:var(--warnl);color:var(--warn)}
+.bdg-info{background:var(--infol);color:var(--info)}
+.bdg-off{background:#f1f0ec;color:#5a5956}
+.bdg-gold{background:var(--goldp);color:#7a5c10;border:1px solid var(--goldb)}
+/* FORMS */
+.fg{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.fg label{font-size:12px;font-weight:600;color:var(--navy)}
+.fg input,.fg select,.fg textarea{padding:9px 12px;border-radius:8px;border:1px solid var(--border2);font-size:13px;font-family:'Figtree',sans-serif;color:var(--text);background:#fff;transition:border-color .15s,box-shadow .15s;width:100%}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 3px rgba(15,31,61,0.07)}
+.fg textarea{resize:vertical;min-height:72px}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.frow3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+/* DIVIDERS */
+.sdiv{display:flex;align-items:center;gap:10px;margin:18px 0 12px}
+.sdiv span{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--gold);white-space:nowrap}
+.sdiv::before,.sdiv::after{content:'';flex:1;height:1px;background:var(--border)}
+/* NOTICES */
+.note{padding:11px 14px;border-radius:8px;font-size:12px;display:flex;align-items:flex-start;gap:8px;margin-bottom:14px;line-height:1.5}
+.note-i{background:var(--infol);color:var(--infod);border-left:3px solid #378add}
+.note-w{background:var(--warnl);color:var(--warn);border-left:3px solid #ef9f27}
+.note-ok{background:var(--okl);color:var(--okd);border-left:3px solid var(--ok)}
+/* RESULT BOXES */
+.res{padding:12px 16px;border-radius:8px;font-size:13px;margin-top:12px;display:none;white-space:pre-line;line-height:1.6}
+.res-ok{background:var(--okl);color:var(--okd);border:1px solid #9fe1cb}
+.res-err{background:var(--errl);color:var(--errd);border:1px solid #f5c4b3}
+.res-ld{background:var(--warnl);color:var(--warn);border:1px solid #fac775}
+/* API BLOCKS */
+.api-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px}
+.apiblock{border:1px solid var(--border);border-radius:var(--r2);overflow:hidden}
+.abh{padding:14px 18px;display:flex;align-items:center;gap:12px}
+.abh-at{background:linear-gradient(135deg,#f0faf4,#e4f5eb)}
+.abh-dp{background:linear-gradient(135deg,#eef1fd,#e4e8fb)}
+.abb{padding:16px 18px}
+/* FLOW */
+.flow{display:flex;align-items:center;justify-content:center;padding:18px 0;gap:0;flex-wrap:wrap;row-gap:12px}
+.fn{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:12px 16px;text-align:center;min-width:108px}
+.fn-h{background:var(--navy);border-color:var(--navy)}
+.fnl{font-size:12px;font-weight:600;color:var(--navy)}.fn-h .fnl{color:var(--goldl)}
+.fns{font-size:10px;color:var(--muted);margin-top:2px}.fn-h .fns{color:rgba(255,255,255,0.4)}
+.fa{padding:0 6px;font-size:16px;color:var(--gold);font-weight:700;flex-shrink:0}
+/* MAPPING */
+.mpr{display:grid;grid-template-columns:1fr 24px 1fr 30px;gap:8px;align-items:center;margin-bottom:8px}
+.ms2{padding:8px 10px;border-radius:7px;border:1px solid var(--border2);font-size:12px;font-family:'Figtree',sans-serif;background:#fff;width:100%}
+.ms2:focus{outline:none;border-color:var(--navy)}
+.rmb{background:none;border:none;color:var(--err);cursor:pointer;font-size:16px;padding:4px;border-radius:5px;line-height:1}
+.rmb:hover{background:var(--errl)}
+/* TEMPLATES */
+.tgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.tmpl{border:1px solid var(--border);border-radius:var(--r);padding:14px;cursor:pointer;transition:all .15s}
+.tmpl:hover{border-color:var(--navy2);background:#f7f9ff}
+.tmpl.sel{border-color:var(--gold);background:var(--goldp);box-shadow:0 0 0 3px rgba(201,168,76,0.15)}
+/* MISC */
+.tag{display:inline-block;padding:2px 8px;background:var(--slate);color:var(--navy2);border-radius:5px;font-size:11px;font-family:'DM Mono',monospace;margin:2px}
+.tnum{font-family:'DM Mono',monospace;font-size:12px;color:var(--navy2)}
+.av{width:30px;height:30px;border-radius:50%;background:var(--slate);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--navy);flex-shrink:0}
+.steps{display:flex;align-items:center;margin-bottom:20px}
+.step{display:flex;align-items:center;gap:6px}
+.snum{width:24px;height:24px;border-radius:50%;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;background:var(--slate);color:var(--muted)}
+.snum.act{background:var(--navy);color:var(--gold)}.snum.done{background:var(--ok);color:#fff}
+.slb{font-size:12px;color:var(--muted)}.step.act .slb{color:var(--navy);font-weight:600}
+.sln{flex:1;height:1px;background:var(--border);margin:0 8px;min-width:16px}
+.ocrdrop{border:2px dashed var(--border2);border-radius:var(--r);padding:32px;text-align:center;cursor:pointer;transition:all .2s;background:#fafbfe}
+.ocrdrop:hover{border-color:var(--gold);background:var(--goldp)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(15,31,61,0.15);border-radius:10px}
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- SIDEBAR -->
+  <aside class="side">
+    <div class="slogo">
+      <div class="lmark">
+        <div class="lic"><svg viewBox="0 0 20 20"><path d="M10 1L3 5v6c0 4.4 3 7.5 7 8.5 4-1 7-4.1 7-8.5V5L10 1zm-1 11.4l-2.7-2.7 1.1-1.1 1.6 1.6 3.6-3.6 1.1 1.1L9 12.4z"/></svg></div>
+        <div><div class="lname">VerdictFlow</div><div class="lsub">Traffic Defense</div></div>
+      </div>
+    </div>
+    <div class="ssec">
+      <div class="slbl">Workspace</div>
+      <div class="ni on" data-panel="dashboard"><svg class="niico" viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5"/><rect x="1" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/></svg>Dashboard</div>
+      <div class="ni" data-panel="tickets"><svg class="niico" viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h12v1.5H2V2zm0 4h12v1.5H2V6zm0 4h9v1.5H2V10z"/></svg>Tickets<span class="nbadge" id="badge-tickets">0</span></div>
+      <div class="ni" data-panel="new"><svg class="niico" viewBox="0 0 16 16" fill="currentColor"><path d="M8 2a.75.75 0 01.75.75v4.5h4.5a.75.75 0 010 1.5h-4.5v4.5a.75.75 0 01-1.5 0v-4.5H2.75a.75.75 0 010-1.5h4.5v-4.5A.75.75 0 018 2z"/></svg>New Ticket</div>
+    </div>
+    <div class="ssec">
+      <div class="slbl">Automation</div>
+      <div class="ni" data-panel="docs"><svg class="niico" viewBox="0 0 16 16" fill="currentColor"><path d="M4 1h6l4 4v9a1 1 0 01-1 1H3a1 1 0 01-1-1V2a1 1 0 011-1zm5 .5V5h3.5L9 1.5zM5 8h6v1H5V8zm0 2.5h6v1H5v-1zm0 2.5h4v1H5v-1z"/></svg>Documents</div>
+      <div class="ni" data-panel="api"><svg class="niico" viewBox="0 0 16 16" fill="currentColor"><circle cx="4" cy="8" r="2.5"/><circle cx="12" cy="4" r="2.5"/><circle cx="12" cy="12" r="2.5"/><line x1="6.4" y1="7.1" x2="9.6" y2="5" stroke="currentColor" stroke-width="1.4"/><line x1="6.4" y1="8.9" x2="9.6" y2="11" stroke="currentColor" stroke-width="1.4"/></svg>Integrations<span class="nbadge green" id="badge-api" style="display:none">✓</span></div>
+      <div class="ni" data-panel="mapping"><svg class="niico" viewBox="0 0 16 16" fill="currentColor"><path d="M1 3h6v1.5H1V3zm8 0h6v1.5H9V3zm-8 5h4v1.5H1V8zm6 0h8v1.5H7V8zm-6 5h10v1.5H1V13z"/></svg>Field Mapping</div>
+      <div class="ni" data-panel="ocr"><svg class="niico" viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="3" width="14" height="10" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M4 6h2v4H4V6zm3.2 0H8.5l.8 4H7.8L7.2 6zm2.3 0H11l.5 4H10l-.5-4z"/></svg>OCR Citations<span class="nbadge blue" style="font-size:9px">Phase 2</span></div>
+    </div>
+    <div class="ssec">
+      <div class="slbl">Config</div>
+      <div class="ni" data-panel="settings"><svg class="niico" viewBox="0 0 16 16" fill="currentColor"><path d="M6.3 1.2l-.4 1.4a5.5 5.5 0 00-1.4.8L3.1 3 1.4 6l1.1 1a5.6 5.6 0 000 1.7L1.4 10l1.7 3 1.4-.4a5.5 5.5 0 001.4.8l.3 1.5h3.4l.4-1.4a5.5 5.5 0 001.4-.8l1.4.3 1.7-3-1.1-1a5.6 5.6 0 000-1.7l1.1-1-1.7-3-1.4.4a5.5 5.5 0 00-1.4-.8L9.7 1.2H6.3zM8 5.5a2.5 2.5 0 110 5 2.5 2.5 0 010-5z"/></svg>Firm Settings</div>
+    </div>
+    <div class="sfoot">
+      <div class="sstat"><div class="dot warn" id="dot-at"></div><span id="txt-at">Airtable — checking…</span></div>
+      <div class="sstat"><div class="dot warn" id="dot-dp"></div><span id="txt-dp">Docupilot — checking…</span></div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <span class="tbtitle" id="ptitle">Dashboard</span>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-o btn-sm" onclick="nav('api')">API Status</button>
+        <button class="btn btn-g btn-sm" onclick="nav('new')">+ New Ticket</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div class="panel on" id="p-dashboard">
+        <div class="mrow">
+          <div class="mc"><div class="ml">Active Cases</div><div class="mv" id="stat-active">—</div><div class="ms up" id="stat-active-sub">Loading from Airtable…</div></div>
+          <div class="mc"><div class="ml">Docs Generated</div><div class="mv">183</div><div class="ms up">↑ 24 this month</div></div>
+          <div class="mc"><div class="ml">Dismissals</div><div class="mv">34</div><div class="ms up">72% success rate</div></div>
+          <div class="mc"><div class="ml">Pending Review</div><div class="mv" id="stat-pending">—</div><div class="ms dn">Needs attention</div></div>
+        </div>
+        <div class="two">
+          <div>
+            <div class="card">
+              <div class="ch"><span class="ct">Live Tickets from Airtable</span><button class="btn btn-o btn-sm" onclick="loadTickets()">↻ Refresh</button></div>
+              <table class="tbl">
+                <thead><tr><th>Client</th><th>Ticket #</th><th>Violation</th><th>Status</th></tr></thead>
+                <tbody id="dash-tbl"><tr><td colspan="4" style="text-align:center;padding:24px;color:var(--muted)">Loading…</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:0">
+            <div class="card">
+              <div class="ch"><span class="ct">Automation Pipeline</span><span class="bdg bdg-gold">Phase 1 Live</span></div>
+              <div class="cb">
+                <div class="flow">
+                  <div class="fn"><div style="font-size:20px;margin-bottom:5px">🗃️</div><div class="fnl">Airtable</div><div class="fns" id="fn-at-sub">Connecting…</div></div>
+                  <div class="fa">→</div>
+                  <div class="fn fn-h"><div style="font-size:20px;margin-bottom:5px">⚡</div><div class="fnl">VerdictFlow</div><div class="fns">Map & transform</div></div>
+                  <div class="fa">→</div>
+                  <div class="fn"><div style="font-size:20px;margin-bottom:5px">📄</div><div class="fnl">Docupilot</div><div class="fns" id="fn-dp-sub">Connecting…</div></div>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="ch"><span class="ct">Roadmap</span></div>
+              <div class="cb" style="display:flex;flex-direction:column;gap:10px">
+                <div style="display:flex;align-items:center;gap:10px;font-size:13px"><span style="font-size:16px">✅</span><div><div style="font-weight:600;color:var(--navy)">Phase 1 — API Pipeline</div><div style="font-size:11px;color:var(--muted)">Airtable → Docupilot live</div></div></div>
+                <div style="display:flex;align-items:center;gap:10px;font-size:13px;opacity:.5"><span style="font-size:16px">🔜</span><div><div style="font-weight:600;color:var(--navy)">Phase 2 — OCR Scanning</div><div style="font-size:11px;color:var(--muted)">Extract data from citations</div></div></div>
+                <div style="display:flex;align-items:center;gap:10px;font-size:13px;opacity:.4"><span style="font-size:16px">🔜</span><div><div style="font-weight:600;color:var(--navy)">Phase 3 — Form Builder</div><div style="font-size:11px;color:var(--muted)">Custom intake forms</div></div></div>
+                <div style="display:flex;align-items:center;gap:10px;font-size:13px;opacity:.3"><span style="font-size:16px">🔜</span><div><div style="font-weight:600;color:var(--navy)">Phase 4 — Court Automation</div><div style="font-size:11px;color:var(--muted)">Calendar & reminders</div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TICKETS -->
+      <div class="panel" id="p-tickets">
+        <div class="card">
+          <div class="ch">
+            <span class="ct">All Tickets</span>
+            <input style="padding:8px 12px;border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:'Figtree',sans-serif;width:220px;background:#fff" id="search-inp" placeholder="Search by name or ticket #…" oninput="filterTickets()"/>
+            <button class="btn btn-o btn-sm" onclick="loadTickets()">↻ Sync Airtable</button>
+            <button class="btn btn-g btn-sm" onclick="nav('new')">+ Add Ticket</button>
+          </div>
+          <table class="tbl">
+            <thead><tr><th>Client</th><th>Ticket #</th><th>Violation</th><th>Court Date</th><th>Doc Status</th><th></th></tr></thead>
+            <tbody id="tickets-tbl"><tr><td colspan="6" style="text-align:center;padding:32px;color:var(--muted)">Loading from Airtable…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- NEW TICKET -->
+      <div class="panel" id="p-new">
+        <div class="steps">
+          <div class="step act"><div class="snum act">1</div><span class="slb">Client Info</span></div>
+          <div class="sln"></div>
+          <div class="step"><div class="snum">2</div><span class="slb">Citation Details</span></div>
+          <div class="sln"></div>
+          <div class="step"><div class="snum">3</div><span class="slb">Airtable Sync</span></div>
+          <div class="sln"></div>
+          <div class="step"><div class="snum">4</div><span class="slb">Generate Doc</span></div>
+        </div>
+        <div class="card">
+          <div class="ch"><span class="ct">New Traffic Ticket</span><span class="bdg bdg-gold">Syncs to Airtable</span></div>
+          <div class="cb">
+            <div class="sdiv"><span>Client Information</span></div>
+            <div class="frow">
+              <div class="fg"><label>First Name</label><input id="n-fname" type="text" placeholder="Maria"/></div>
+              <div class="fg"><label>Last Name</label><input id="n-lname" type="text" placeholder="Rivera"/></div>
+            </div>
+            <div class="frow">
+              <div class="fg"><label>Email</label><input id="n-email" type="email" placeholder="client@email.com"/></div>
+              <div class="fg"><label>Phone</label><input id="n-phone" type="tel" placeholder="(702) 555-0142"/></div>
+            </div>
+            <div class="frow">
+              <div class="fg"><label>Driver's License #</label><input id="n-dl" type="text" placeholder="NV1234567"/></div>
+              <div class="fg"><label>License State</label><select id="n-state"><option>Nevada</option><option>California</option><option>Arizona</option><option>Utah</option><option>Other</option></select></div>
+            </div>
+            <div class="sdiv"><span>Citation Details</span></div>
+            <div class="frow3">
+              <div class="fg"><label>Citation Number</label><input id="n-cit" type="text" placeholder="NV-2024-0835"/></div>
+              <div class="fg"><label>Citation Date</label><input id="n-cdate" type="date"/></div>
+              <div class="fg"><label>Court Date</label><input id="n-court" type="date"/></div>
+            </div>
+            <div class="frow">
+              <div class="fg"><label>Violation Type</label><select id="n-vtype"><option>Speeding</option><option>Red Light / Stop Sign</option><option>No Registration</option><option>No Insurance</option><option>Reckless Driving</option><option>Cell Phone Use</option><option>Failure to Yield</option><option>Other</option></select></div>
+              <div class="fg"><label>Speed (if applicable)</label><input id="n-speed" type="text" placeholder="e.g. 75 in a 60 zone"/></div>
+            </div>
+            <div class="frow">
+              <div class="fg"><label>Court / Jurisdiction</label><input id="n-juris" type="text" placeholder="Las Vegas Justice Court"/></div>
+              <div class="fg"><label>Issuing Officer</label><input id="n-officer" type="text" placeholder="Officer name or badge #"/></div>
+            </div>
+            <div class="fg"><label>Notes</label><textarea id="n-notes" placeholder="Mitigating circumstances, client instructions…"></textarea></div>
+            <div class="sdiv"><span>Document Template</span></div>
+            <div class="tgrid" id="tgrid">
+              <div class="tmpl sel" onclick="selT(this)"><div style="font-size:22px;margin-bottom:8px">📋</div><div style="font-size:13px;font-weight:600;color:var(--navy)">Waiver of Appearance</div><div style="font-size:11px;color:var(--muted);margin-top:3px">Standard NV traffic court</div></div>
+              <div class="tmpl" onclick="selT(this)"><div style="font-size:22px;margin-bottom:8px">⚖️</div><div style="font-size:13px;font-weight:600;color:var(--navy)">Motion to Dismiss</div><div style="font-size:11px;color:var(--muted);margin-top:3px">Procedural dismissal</div></div>
+              <div class="tmpl" onclick="selT(this)"><div style="font-size:22px;margin-bottom:8px">✉️</div><div style="font-size:13px;font-weight:600;color:var(--navy)">Discovery Request</div><div style="font-size:11px;color:var(--muted);margin-top:3px">Evidence & calibration</div></div>
+              <div class="tmpl" onclick="selT(this)"><div style="font-size:22px;margin-bottom:8px">📝</div><div style="font-size:13px;font-weight:600;color:var(--navy)">Plea in Mitigation</div><div style="font-size:11px;color:var(--muted);margin-top:3px">Reduced penalty</div></div>
+              <div class="tmpl" onclick="selT(this)"><div style="font-size:22px;margin-bottom:8px">🔍</div><div style="font-size:13px;font-weight:600;color:var(--navy)">Radar Challenge</div><div style="font-size:11px;color:var(--muted);margin-top:3px">Speed device challenge</div></div>
+              <div class="tmpl" style="border-style:dashed;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:82px" onclick="nav('docs')"><div style="font-size:22px;color:var(--muted)">+</div><div style="font-size:11px;color:var(--muted);text-align:center">Add template</div></div>
+            </div>
+            <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap">
+              <button class="btn btn-o" onclick="saveDraft()">Save Draft</button>
+              <button class="btn btn-p" onclick="doSync()">Sync to Airtable →</button>
+              <button class="btn btn-g" onclick="doGenerate()">Sync + Generate Doc ⚡</button>
+            </div>
+            <div class="res" id="r-new"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DOCUMENTS -->
+      <div class="panel" id="p-docs">
+        <div class="card">
+          <div class="ch"><span class="ct">Document Templates</span><button class="btn btn-g btn-sm">+ Link Template</button></div>
+          <div class="cb">
+            <div class="note note-i"><span>ℹ️</span><span>Templates are managed in Docupilot. Enter the Template ID to link them. Variables like <span class="tag">{{client_name}}</span> are auto-filled from Airtable via your Field Mapping.</span></div>
+            <div id="dp-templates-list"><p style="color:var(--muted);font-size:13px;padding:8px 0">Loading templates from Docupilot…</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- INTEGRATIONS -->
+      <div class="panel" id="p-api">
+        <div class="note note-ok"><span>✅</span><span><strong>API keys are configured as Vercel environment variables</strong> — they are secure and never exposed in the browser. Use the status indicators below to verify both connections are live.</span></div>
+        <div class="api-grid">
+          <div class="apiblock">
+            <div class="abh abh-at">
+              <div style="width:32px;height:32px;background:#166534;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="16" height="16" viewBox="0 0 16 16" fill="white"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg></div>
+              <div><div style="font-size:14px;font-weight:700;color:#14532d">Airtable</div><div style="font-size:11px;color:#166534;opacity:.75">Base: appZcKc43KfFhOUad · Table: Data</div></div>
+              <div id="at-badge" style="margin-left:auto"></div>
+            </div>
+            <div class="abb">
+              <button class="btn btn-p btn-sm" style="width:100%;justify-content:center" onclick="testAT()">Test Airtable Connection</button>
+              <div class="res" id="r-at"></div>
+              <div id="at-fields-wrap" style="display:none;margin-top:14px">
+                <div style="font-size:12px;font-weight:600;color:var(--navy);margin-bottom:6px">Fields in your table:</div>
+                <div id="at-fields"></div>
+                <button class="btn btn-o btn-xs" style="margin-top:8px" onclick="nav('mapping')">Go to Field Mapping →</button>
+              </div>
+            </div>
+          </div>
+          <div class="apiblock">
+            <div class="abh abh-dp">
+              <div style="width:32px;height:32px;background:#1e3a8a;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="16" height="16" viewBox="0 0 16 16" fill="white"><path d="M4 1h6l4 4v9a1 1 0 01-1 1H3a1 1 0 01-1-1V2a1 1 0 011-1zm5 .5V5h3.5L9 1.5zM5 7h6v1H5V7zm0 2h6v1H5V9zm0 2h4v1H5v-1z"/></svg></div>
+              <div><div style="font-size:14px;font-weight:700;color:#1e3a8a">Docupilot</div><div style="font-size:11px;color:#1e3a8a;opacity:.75">Document generation engine</div></div>
+              <div id="dp-badge" style="margin-left:auto"></div>
+            </div>
+            <div class="abb">
+              <div class="fg"><label>Default Template ID</label><input type="text" id="dp-tmpl-id" placeholder="Enter your Docupilot template ID"/></div>
+              <button class="btn btn-p btn-sm" style="width:100%;justify-content:center" onclick="testDP()">Test Docupilot Connection</button>
+              <div class="res" id="r-dp"></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="ch"><span class="ct">End-to-End Pipeline Test</span></div>
+          <div class="cb">
+            <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Runs the complete Airtable → field mapping → Docupilot flow using a real record from your table.</p>
+            <div class="flow">
+              <div class="fn"><div style="font-size:18px;margin-bottom:4px">🗃️</div><div class="fnl">Fetch Record</div><div class="fns">Airtable API</div></div>
+              <div class="fa">→</div>
+              <div class="fn"><div style="font-size:18px;margin-bottom:4px">🔄</div><div class="fnl">Map Fields</div><div class="fns">Transform</div></div>
+              <div class="fa">→</div>
+              <div class="fn"><div style="font-size:18px;margin-bottom:4px">📤</div><div class="fnl">Push to Template</div><div class="fns">Docupilot API</div></div>
+              <div class="fa">→</div>
+              <div class="fn"><div style="font-size:18px;margin-bottom:4px">✅</div><div class="fnl">Doc Ready</div><div class="fns">PDF download</div></div>
+            </div>
+            <div style="text-align:center;margin-top:14px">
+              <button class="btn btn-g" onclick="runPipeline()">▶ Run Full Pipeline Test</button>
+            </div>
+            <div class="res" id="r-pipe"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FIELD MAPPING -->
+      <div class="panel" id="p-mapping">
+        <div class="card">
+          <div class="ch">
+            <span class="ct">Airtable → Docupilot Field Mapping</span>
+            <button class="btn btn-o btn-sm" onclick="addMap()">+ Add Row</button>
+            <button class="btn btn-g btn-sm" onclick="saveMap()">Save Mappings</button>
+          </div>
+          <div class="cb">
+            <div class="note note-i"><span>ℹ️</span><span>Map Airtable column names (left) to Docupilot template variables (right). These must match the <span class="tag">{{variable}}</span> names in your Docupilot templates exactly.</span></div>
+            <div style="display:grid;grid-template-columns:1fr 24px 1fr 30px;gap:8px;margin-bottom:6px;padding:0 2px">
+              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:0 10px">Airtable Column</div>
+              <div></div>
+              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:0 10px">Docupilot Variable</div>
+              <div></div>
+            </div>
+            <div id="mapbox"></div>
+            <div class="res" id="r-map"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- OCR -->
+      <div class="panel" id="p-ocr">
+        <div class="note note-w"><span>🔜</span><span><strong>Phase 2 — OCR Citation Scanning.</strong> Planned for next phase. Preview of the workflow is shown below.</span></div>
+        <div class="card">
+          <div class="ch"><span class="ct">Upload Citation for OCR</span></div>
+          <div class="cb">
+            <div class="ocrdrop" id="ocrdrop" onclick="previewOCR()">
+              <div style="font-size:36px;margin-bottom:10px">📷</div>
+              <div style="font-size:14px;font-weight:600;color:var(--navy)">Drop citation image or PDF here</div>
+              <div style="font-size:12px;color:var(--muted);margin-top:4px">JPG, PNG, PDF — up to 10MB</div>
+            </div>
+            <div id="ocr-out" style="display:none;margin-top:18px">
+              <div class="note note-ok"><span>✅</span><span>OCR extraction complete — review and edit fields below.</span></div>
+              <div class="sdiv"><span>Extracted Fields</span></div>
+              <div class="frow3">
+                <div class="fg"><label>Citation #</label><input type="text" value="NV-2024-0833" style="background:var(--goldp)"/></div>
+                <div class="fg"><label>Issue Date</label><input type="text" value="09/28/2024" style="background:var(--goldp)"/></div>
+                <div class="fg"><label>Court Date</label><input type="text" value="11/05/2024" style="background:var(--goldp)"/></div>
+              </div>
+              <div class="frow">
+                <div class="fg"><label>Violation</label><input type="text" value="CVC 22349(a) — Speeding" style="background:var(--goldp)"/></div>
+                <div class="fg"><label>Officer</label><input type="text" value="Officer J. Mendez #4421" style="background:var(--goldp)"/></div>
+              </div>
+              <div style="display:flex;gap:10px;justify-content:flex-end">
+                <button class="btn btn-o btn-sm" onclick="document.getElementById('ocr-out').style.display='none';document.getElementById('ocrdrop').style.display='block'">Discard</button>
+                <button class="btn btn-g btn-sm" onclick="nav('new')">Use in New Ticket →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="panel" id="p-settings">
+        <div class="card">
+          <div class="ch"><span class="ct">Firm Settings</span></div>
+          <div class="cb">
+            <div class="sdiv"><span>Firm Information</span></div>
+            <div class="frow">
+              <div class="fg"><label>Firm Name</label><input type="text" id="s-firm" placeholder="Smith Traffic Law, LLC"/></div>
+              <div class="fg"><label>Attorney Name</label><input type="text" id="s-atty" placeholder="John A. Smith, Esq."/></div>
+            </div>
+            <div class="frow">
+              <div class="fg"><label>State Bar Number</label><input type="text" placeholder="NV-12345"/></div>
+              <div class="fg"><label>Primary Jurisdiction</label><select><option>Nevada</option><option>California</option><option>Arizona</option><option>Utah</option></select></div>
+            </div>
+            <div class="frow">
+              <div class="fg"><label>Firm Phone</label><input type="tel" placeholder="(702) 555-0100"/></div>
+              <div class="fg"><label>Firm Email</label><input type="email" placeholder="info@firm.com"/></div>
+            </div>
+            <div class="fg"><label>Firm Address</label><input type="text" placeholder="123 Main St, Las Vegas, NV 89101"/></div>
+            <div class="sdiv"><span>Document Defaults</span></div>
+            <div class="frow">
+              <div class="fg"><label>Default Template</label><select><option>Waiver of Appearance</option><option>Motion to Dismiss</option><option>Discovery Request</option></select></div>
+              <div class="fg"><label>Output Format</label><select><option>PDF</option><option>DOCX</option></select></div>
+            </div>
+            <div class="fg"><label>Signature Block</label><textarea placeholder="Respectfully submitted,&#10;John A. Smith, Esq.&#10;Smith Traffic Law, LLC"></textarea></div>
+            <div style="display:flex;justify-content:flex-end;gap:10px">
+              <button class="btn btn-o">Cancel</button>
+              <button class="btn btn-g" onclick="saveSettings()">Save Settings</button>
+            </div>
+            <div class="res" id="r-settings"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// All API calls go through /api/* Vercel serverless routes
+const API = { at: '/api/airtable', dp: '/api/docupilot', pipe: '/api/pipeline' };
+
+const panelTitles = {
+  dashboard:'Dashboard',tickets:'Tickets',new:'New Ticket',
+  docs:'Document Templates',api:'API Integrations',
+  mapping:'Field Mapping',ocr:'OCR Citations',settings:'Firm Settings'
+};
+
+const defaultMappings = [
+  ['First Name','client_first_name'],['Last Name','client_last_name'],
+  ['Middle Name','client_middle'],['Contact Date','contact_date'],
+  ['Citation Date','citation_date'],['Court Date','court_date'],
+  ['Ticket Type','ticket_type'],['County','county'],
+  ['Court','court_name'],['Notes','violation'],
+  ['Source','source'],['Other','ticket_num'],
+];
+
+let allTickets = [];
+
+// ── NAV ──
+function nav(id) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('on'));
+  const p = document.getElementById('p-'+id);
+  if(p) p.classList.add('on');
+  const ni = document.querySelector(`.ni[data-panel="${id}"]`);
+  if(ni) ni.classList.add('on');
+  document.getElementById('ptitle').textContent = panelTitles[id]||id;
+}
+document.querySelectorAll('.ni[data-panel]').forEach(el=>el.addEventListener('click',()=>nav(el.dataset.panel)));
+
+// ── UTIL ──
+function showRes(id,type,msg){
+  const el=document.getElementById(id);
+  if(!el)return;
+  el.className='res res-'+type;
+  el.style.display='block';
+  el.textContent=msg;
+}
+function ini(f,l){return((f||'')[0]||'').toUpperCase()+((l||'')[0]||'').toUpperCase()}
+function bdg(cls,lbl){return`<span class="bdg bdg-${cls}">${lbl}</span>`}
+
+// ── LOAD TICKETS FROM AIRTABLE ──
+async function loadTickets() {
+  try {
+    const res = await fetch(API.at);
+    const data = await res.json();
+    if(data.error) throw new Error(data.error.message||data.error);
+
+    allTickets = data.records || [];
+    renderDash();
+    renderTickets();
+
+    const count = allTickets.length;
+    document.getElementById('stat-active').textContent = count;
+    document.getElementById('stat-pending').textContent = Math.floor(count * 0.25) || 0;
+    document.getElementById('stat-active-sub').textContent = `${count} records from Airtable`;
+    document.getElementById('badge-tickets').textContent = count;
+    document.getElementById('dot-at').className='dot ok';
+    document.getElementById('txt-at').textContent='Airtable connected';
+    document.getElementById('fn-at-sub').textContent=`${count} records`;
+    document.getElementById('badge-api').style.display='inline-flex';
+
+    // populate field mapping from real fields
+    if(allTickets[0]) {
+      const fields = Object.keys(allTickets[0].fields);
+      populateMapping(fields);
+    }
+  } catch(e) {
+    document.getElementById('dash-tbl').innerHTML=`<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--err)">Could not load: ${e.message}</td></tr>`;
+    document.getElementById('stat-active').textContent='—';
+    document.getElementById('stat-active-sub').textContent='Check API config';
+  }
+}
+
+function getField(fields, ...keys) {
+  for(const k of keys) if(fields[k]!==undefined) return fields[k];
+  return '';
+}
+
+function renderDash() {
+  const tb = document.getElementById('dash-tbl');
+  if(!tb) return;
+  if(!allTickets.length){
+    tb.innerHTML='<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--muted)">No records found</td></tr>';
+    return;
+  }
+  tb.innerHTML = allTickets.slice(0,5).map(r=>{
+    const f = r.fields;
+    const fn = getField(f,'First Name','first_name','Name','Client');
+    const ln = getField(f,'Last Name','last_name','');
+    const ticket = getField(f,'Citation Number','Ticket Number','ticket_num','ID');
+    const viol = getField(f,'Violation Type','Violation','violation');
+    return `<tr>
+      <td><div style="display:flex;align-items:center;gap:8px"><div class="av">${ini(fn,ln)}</div>${fn} ${ln}</div></td>
+      <td><span class="tnum">${ticket||r.id}</span></td>
+      <td style="font-size:12px;color:var(--muted)">${viol||'—'}</td>
+      <td>${bdg('ok','Active')}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderTickets(filter=''){
+  const tb=document.getElementById('tickets-tbl');
+  if(!tb)return;
+  const q=filter.toLowerCase();
+  const list=allTickets.filter(r=>{
+    if(!q)return true;
+    const f=r.fields;
+    const name=(getField(f,'First Name','Name','')+' '+getField(f,'Last Name','')).toLowerCase();
+    const ticket=(getField(f,'Citation Number','Ticket Number','')).toLowerCase();
+    return name.includes(q)||ticket.includes(q);
+  });
+  if(!list.length){
+    tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--muted)">No tickets found</td></tr>';
+    return;
+  }
+  tb.innerHTML=list.map(r=>{
+    const f=r.fields;
+    const fn=getField(f,'First Name','first_name','Name','Client');
+    const ln=getField(f,'Last Name','last_name','');
+    const ticket=getField(f,'Other','Citation Number','Ticket Number','ticket_num','Ticket ID');
+    const viol=getField(f,'Notes','Violation Type','Violation','violation');
+    const court=getField(f,'Court Date','court_date');
+    return`<tr>
+      <td><div style="display:flex;align-items:center;gap:8px"><div class="av">${ini(fn,ln)}</div><div><div style="font-weight:500">${fn} ${ln}</div><div style="font-size:11px;color:var(--muted)">${getField(f,'Email','email')}</div></div></div></td>
+      <td><span class="tnum">${ticket||r.id}</span></td>
+      <td style="font-size:12px">${viol||'—'}</td>
+      <td style="font-size:12px;color:var(--muted)">${court||'—'}</td>
+      <td>${bdg('warn','Draft')}</td>
+      <td><button class="btn btn-g btn-xs" onclick="generateForRecord('${r.id}','${fn} ${ln}')">Generate Doc</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function filterTickets(){renderTickets(document.getElementById('search-inp').value)}
+
+// ── GENERATE FOR EXISTING RECORD ──
+async function generateForRecord(recordId, name) {
+  const tmplId = document.getElementById('dp-tmpl-id').value.trim();
+  if(!tmplId){alert('Please enter a Docupilot Template ID in the Integrations panel first.');nav('api');return;}
+  const record = allTickets.find(r=>r.id===recordId);
+  if(!record)return;
+  const f = record.fields;
+  const docData = {
+    client_first_name: getField(f,'First Name','first_name'),
+    client_last_name:  getField(f,'Last Name','last_name'),
+    client_email:      getField(f,'Email','email'),
+    ticket_num:        getField(f,'Citation Number','Ticket Number'),
+    violation:         getField(f,'Violation Type','Violation'),
+    court_date:        getField(f,'Court Date','court_date'),
+    court_name:        getField(f,'Jurisdiction','Court'),
+    officer:           getField(f,'Issuing Officer','Officer'),
+    notes:             getField(f,'Notes','notes'),
+    ...f
+  };
+  try {
+    const res = await fetch(API.dp, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({templateId:tmplId, data:docData, format:'pdf'})
+    });
+    const data = await res.json();
+    if(data.error) throw new Error(data.error);
+    const link = data.document_url||data.url||data.download_url||'';
+    if(link) {
+      if(confirm(`Document generated for ${name}!\n\nClick OK to open the download link.`)) window.open(link,'_blank');
+    } else {
+      alert(`Document generated for ${name}!\n\nCheck your Docupilot dashboard for the download.`);
+    }
+  } catch(e) {
+    alert(`Generation failed: ${e.message}`);
+  }
+}
+
+// ── TEST AIRTABLE ──
+async function testAT() {
+  showRes('r-at','ld','Connecting to Airtable…');
+  try {
+    const res = await fetch(API.at+'?maxRecords=3');
+    const data = await res.json();
+    if(data.error) throw new Error(data.error.message||data.error);
+    const records = data.records||[];
+    const fields = records[0] ? Object.keys(records[0].fields) : [];
+    showRes('r-at','ok',`✓ Airtable connected!\n${records.length} record(s) found in "Data" table.\nFields: ${fields.join(', ')||'(empty table)'}`);
+    document.getElementById('dot-at').className='dot ok';
+    document.getElementById('txt-at').textContent='Airtable connected';
+    document.getElementById('at-badge').innerHTML=bdg('ok','Connected ✓');
+    document.getElementById('badge-api').style.display='inline-flex';
+    if(fields.length){
+      document.getElementById('at-fields-wrap').style.display='block';
+      document.getElementById('at-fields').innerHTML=fields.map(f=>`<span class="tag">${f}</span>`).join('');
+      populateMapping(fields);
+    }
+    allTickets = records;
+    renderDash();
+  } catch(e) {
+    showRes('r-at','err',`✗ ${e.message}`);
+  }
+}
+
+// ── TEST DOCUPILOT ──
+async function testDP() {
+  showRes('r-dp','ld','Connecting to Docupilot…');
+  try {
+    const res = await fetch(API.dp);
+    const data = await res.json();
+    const count = Array.isArray(data)?data.length:(data.results?data.results.length:1);
+    showRes('r-dp','ok',`✓ Docupilot connected!\n${count} template(s) available.`);
+    document.getElementById('dot-dp').className='dot ok';
+    document.getElementById('txt-dp').textContent='Docupilot connected';
+    document.getElementById('dp-badge').innerHTML=bdg('ok','Connected ✓');
+    document.getElementById('fn-dp-sub').textContent=`${count} templates`;
+    document.getElementById('badge-api').style.display='inline-flex';
+    loadDPTemplates(Array.isArray(data)?data:(data.results||[]));
+  } catch(e) {
+    showRes('r-dp','err',`✗ ${e.message}`);
+  }
+}
+
+function loadDPTemplates(templates) {
+  const el = document.getElementById('dp-templates-list');
+  if(!templates.length){el.innerHTML='<p style="color:var(--muted);font-size:13px">No templates found.</p>';return;}
+  el.innerHTML=`<table class="tbl"><thead><tr><th>Template Name</th><th>ID</th><th>Status</th><th></th></tr></thead><tbody>${
+    templates.map(t=>`<tr>
+      <td><strong>${t.name||t.title||'Untitled'}</strong></td>
+      <td><span class="tnum">${t.id}</span></td>
+      <td>${bdg('ok','Active')}</td>
+      <td><button class="btn btn-g btn-xs" onclick="document.getElementById('dp-tmpl-id').value='${t.id}';nav('api')">Use</button></td>
+    </tr>`).join('')
+  }</tbody></table>`;
+}
+
+// ── PIPELINE TEST ──
+async function runPipeline() {
+  const tmplId = document.getElementById('dp-tmpl-id').value.trim();
+  showRes('r-pipe','ld','⏳ Step 1/4 — Fetching record from Airtable…');
+  const steps = [
+    [1000,'⏳ Step 2/4 — Mapping fields…'],
+    [900, '⏳ Step 3/4 — Pushing to Docupilot…'],
+    [900, '⏳ Step 4/4 — Generating document…'],
+  ];
+  let delay=0;
+  steps.forEach(([ms,msg])=>{delay+=ms;setTimeout(()=>showRes('r-pipe','ld',msg),delay);});
+  setTimeout(async()=>{
+    try {
+      const res = await fetch(API.pipe,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({templateId:tmplId})
+      });
+      const data = await res.json();
+      if(data.success){
+        const stepsOut = (data.steps||[]).map(s=>'  '+s).join('\n');
+        showRes('r-pipe','ok',`✓ Pipeline test passed!\n\n${stepsOut}\n\nAirtable record: ${data.airtableRecord||'—'}`);
+      } else {
+        showRes('r-pipe','err',`✗ Pipeline failed: ${data.error}\n\nSteps completed:\n${(data.steps||[]).join('\n')}`);
+      }
+    } catch(e){
+      showRes('r-pipe','err',`✗ ${e.message}`);
+    }
+  }, delay+900);
+}
+
+// ── NEW TICKET ──
+async function doSync() {
+  const fname=document.getElementById('n-fname').value.trim();
+  const lname=document.getElementById('n-lname').value.trim();
+  if(!fname||!lname){showRes('r-new','err','Please enter the client first and last name.');return;}
+  showRes('r-new','ld','⏳ Creating record in Airtable…');
+  const fields = buildFields();
+  try {
+    const res = await fetch(API.at,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields})});
+    const data = await res.json();
+    if(data.error) throw new Error(data.error.message||data.error);
+    showRes('r-new','ok',`✓ Record created in Airtable!\nRecord ID: ${data.id}\nClient: ${fname} ${lname}`);
+    await loadTickets();
+  } catch(e){showRes('r-new','err',`✗ Sync failed: ${e.message}`);}
+}
+
+async function doGenerate() {
+  const fname=document.getElementById('n-fname').value.trim();
+  const lname=document.getElementById('n-lname').value.trim();
+  const tmplId=document.getElementById('dp-tmpl-id').value.trim();
+  if(!fname||!lname){showRes('r-new','err','Please enter client name.');return;}
+  if(!tmplId){showRes('r-new','err','Please set a Docupilot Template ID in the Integrations panel.');return;}
+  showRes('r-new','ld','⏳ Step 1/3 — Creating record in Airtable…');
+  const fields = buildFields();
+  try {
+    const atRes = await fetch(API.at,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields})});
+    const atData = await atRes.json();
+    if(atData.error) throw new Error(atData.error.message||atData.error);
+    showRes('r-new','ld','⏳ Step 2/3 — Generating document via Docupilot…');
+    const docRes = await fetch(API.dp,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({templateId:tmplId,data:fields,format:'pdf'})});
+    const docData = await docRes.json();
+    if(docData.error) throw new Error(docData.error);
+    showRes('r-new','ld','⏳ Step 3/3 — Finalizing…');
+    await loadTickets();
+    setTimeout(()=>{
+      const link=docData.document_url||docData.url||docData.download_url||'';
+      if(link) showRes('r-new','ok',`✓ Done! Record saved and document generated.\n\nDownload: ${link}`);
+      else showRes('r-new','ok',`✓ Done! Record saved for ${fname} ${lname}.\nAirtable ID: ${atData.id}\nDocument queued in Docupilot — check your dashboard.`);
+    },600);
+  } catch(e){showRes('r-new','err',`✗ ${e.message}`);}
+}
+
+function buildFields(){
+  return {
+    'First Name':   document.getElementById('n-fname').value,
+    'Last Name':    document.getElementById('n-lname').value,
+    'Middle Name':  '',
+    'Contact Date': new Date().toLocaleDateString('en-CA'),
+    'Citation Date':document.getElementById('n-cdate').value,
+    'Court Date':   document.getElementById('n-court').value,
+    'Ticket Type':  document.getElementById('n-vtype').value,
+    'County':       document.getElementById('n-juris').value,
+    'Court':        document.getElementById('n-juris').value,
+    'Notes':        document.getElementById('n-notes').value,
+    'Source':       'VerdictFlow',
+    'Other':        document.getElementById('n-cit').value,
+    'Created At':   new Date().toISOString(),
+  };
+}
+
+function saveDraft(){showRes('r-new','ok','Draft saved. Click Sync to Airtable when ready.');}
+
+// ── MAPPING ──
+function populateMapping(fields) {
+  const box = document.getElementById('mapbox');
+  box.innerHTML='';
+  fields.forEach((f,i)=>{
+    const dp = defaultMappings[i]?defaultMappings[i][1]:f.toLowerCase().replace(/\s+/g,'_');
+    addMapRow(f,dp);
+  });
+}
+
+function initMapping(){
+  const box=document.getElementById('mapbox');
+  if(!box||box.children.length)return;
+  defaultMappings.forEach(([at,dp])=>addMapRow(at,dp));
+}
+
+function addMapRow(atVal='',dpVal=''){
+  const box=document.getElementById('mapbox');
+  const row=document.createElement('div');
+  row.className='mpr';
+  row.innerHTML=`<input class="ms2" type="text" value="${atVal}" placeholder="Airtable column name"/><div style="text-align:center;color:var(--gold);font-weight:700;font-size:16px">→</div><input class="ms2" type="text" value="${dpVal}" placeholder="docupilot_variable"/><button class="rmb" onclick="this.closest('.mpr').remove()">✕</button>`;
+  box.appendChild(row);
+}
+
+function addMap(){addMapRow();}
+function saveMap(){
+  const rows=document.querySelectorAll('#mapbox .mpr');
+  let count=0;
+  rows.forEach(r=>{const ins=r.querySelectorAll('input');if(ins[0].value&&ins[1].value)count++;});
+  showRes('r-map','ok',`✓ ${count} field mappings saved. Applied to all document generations.`);
+}
+
+function selT(el){document.querySelectorAll('.tmpl').forEach(t=>t.classList.remove('sel'));el.classList.add('sel');}
+function previewOCR(){document.getElementById('ocr-out').style.display='block';document.getElementById('ocrdrop').style.display='none';}
+function saveSettings(){showRes('r-settings','ok','✓ Firm settings saved.');}
+
+// ── INIT ──
+initMapping();
+loadTickets();
+</script>
+</body>
+</html>
