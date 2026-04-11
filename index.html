@@ -613,42 +613,197 @@ function renderTickets(filter=''){
 function filterTickets(){renderTickets(document.getElementById('search-inp').value)}
 
 // ── GENERATE FOR EXISTING RECORD ──
+
+// ── COURT TEMPLATE MAP ──
+const CIVIL_TEMPLATES = {
+  'GSP':          '105705',
+  'Goodsprings':  '105705',
+  'Laughlin':     '105706',
+  'Moapa Valley': '105708',
+  'Moapa':        '105707',
+  'Searchlight':  '105709',
+  'Bunkerville':  '105704',
+  'LVJC':         '105675',
+  'LVM':          '105675',
+  'DEFAULT':      '105675',
+};
+
+const CRIMINAL_TEMPLATES = {
+  'GSP':          '105701',
+  'Goodsprings':  '105701',
+  'Laughlin':     '105697',
+  'Moapa Valley': '105699',
+  'Moapa':        '105698',
+  'Searchlight':  '105700',
+  'Bunkerville':  '105696',
+};
+
+const CRIMINAL_TICKET_TYPES = ['crim','criminal','dwi','dui'];
+
+function isCriminal(f) {
+  const tt = (f['Ticket Type'] || '').toLowerCase();
+  return CRIMINAL_TICKET_TYPES.some(c => tt.includes(c));
+}
+
+function getTemplate(f) {
+  const court = f['Court'] || '';
+  const crim = isCriminal(f);
+  const templates = crim ? CRIMINAL_TEMPLATES : CIVIL_TEMPLATES;
+  // Match court name - check Moapa Valley before Moapa
+  const keys = Object.keys(templates);
+  for(const key of keys) {
+    if(court.toLowerCase().includes(key.toLowerCase())) return { tmplId: templates[key], isCrim: crim };
+  }
+  return { tmplId: crim ? null : '105675', isCrim: crim };
+}
+
+function parseViolations(notes) {
+  if(!notes) return ['','',''];
+  let parts = notes.split(/(?:^|\s)(?:\d+[.\)\-]\s*)/);
+  parts = parts.filter(p=>p.trim()).map(p=>p.trim());
+  if(parts.length <= 1) parts = notes.split(/[;]\s*/).map(p=>p.trim()).filter(p=>p);
+  while(parts.length < 3) parts.push('');
+  return parts.slice(0,3);
+}
+
 async function generateForRecord(recordId, name) {
-  const tmplId = document.getElementById('dp-tmpl-id').value.trim();
-  if(!tmplId){alert('Please enter a Docupilot Template ID in the Integrations panel first.');nav('api');return;}
   const record = allTickets.find(r=>r.id===recordId);
-  if(!record)return;
+  if(!record) return;
   const f = record.fields;
+  const court = f['Court'] || '';
+  const ticketType = (f['Ticket Type'] || '').toLowerCase();
+  
+  const violations = parseViolations(f['Notes'] || '');
+  const tmplId = getTemplateForRecord(f);
+
+  if(isCrim) {
+    // Show plea selection modal
+    showPleaModal(name, violations, f, tmplId);
+  } else {
+    // Civil — generate directly
+    await generateDoc(f, tmplId, name, ['','','']);
+  }
+}
+
+function showPleaModal(name, violations, fields, tmplId) {
+  // Remove existing modal
+  const existing = document.getElementById('plea-modal');
+  if(existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'plea-modal';
+  modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
+
+  const pleaOpts = ['Guilty','No Contest','Not Guilty'];
+
+  let violationRows = '';
+  for(let i=0;i<3;i++) {
+    const viol = violations[i] || '';
+    violationRows += `
+      <div style="margin-bottom:16px;padding:12px;background:#f8f9fd;border-radius:8px;border:1px solid rgba(15,31,61,0.1)">
+        <div style="font-size:12px;font-weight:600;color:#0f1f3d;margin-bottom:6px">Violation ${i+1}</div>
+        <input type="text" id="viol-${i}" value="${viol.replace(/"/g,'&quot;')}" placeholder="Enter violation description" 
+          style="width:100%;padding:7px 10px;border-radius:6px;border:1px solid rgba(15,31,61,0.18);font-size:13px;font-family:Figtree,sans-serif;margin-bottom:8px"/>
+        <div style="display:flex;gap:8px">
+          ${pleaOpts.map(p => `<label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;padding:5px 12px;border:1px solid rgba(15,31,61,0.18);border-radius:6px;background:#fff">
+            <input type="radio" name="plea-${i}" value="${p}" ${p==='No Contest'?'checked':''} style="cursor:pointer"/> ${p}
+          </label>`).join('')}
+        </div>
+      </div>`;
+  }
+
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:14px;padding:24px;width:580px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+        <div>
+          <div style="font-family:'DM Serif Display',serif;font-size:20px;color:#0f1f3d">Generate Criminal Form</div>
+          <div style="font-size:13px;color:#64748b;margin-top:2px">${name} — ${fields['Court']||''}</div>
+        </div>
+        <button onclick="document.getElementById('plea-modal').remove()" 
+          style="background:none;border:none;font-size:20px;cursor:pointer;color:#64748b;padding:4px">✕</button>
+      </div>
+      <div style="font-size:12px;font-weight:600;color:#c9a84c;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">Select Plea for Each Violation</div>
+      ${violationRows}
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px">
+        <button onclick="document.getElementById('plea-modal').remove()" 
+          style="padding:8px 16px;border-radius:8px;border:1px solid rgba(15,31,61,0.18);background:transparent;font-size:13px;font-family:Figtree,sans-serif;cursor:pointer">Cancel</button>
+        <button onclick="submitPleaModal('${name}', ${JSON.stringify(fields).replace(/'/g,"\'")},'${tmplId}')"
+          style="padding:8px 16px;border-radius:8px;border:none;background:#c9a84c;color:#0f1f3d;font-size:13px;font-weight:600;font-family:Figtree,sans-serif;cursor:pointer">
+          Generate Document ⚡
+        </button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+async function submitPleaModal(name, fields, tmplId) {
+  const pleas = [0,1,2].map(i => {
+    const sel = document.querySelector('input[name="plea-'+i+'"]:checked');
+    return sel ? sel.value : '';
+  });
+  const viols = [0,1,2].map(i => {
+    const inp = document.getElementById('viol-'+i);
+    return inp ? inp.value : '';
+  });
+  document.getElementById('plea-modal').remove();
+  await generateDoc(fields, tmplId, name, pleas, viols);
+}
+
+async function generateDoc(f, tmplId, name, pleas, viols) {
+  const violations = viols || parseViolations(f['Notes']||'');
   const docData = {
-    First_Name: getField(f,'First Name','first_name'),
-    Last_Name:  getField(f,'Last Name','last_name'),
-    client_email:      getField(f,'Email','email'),
-    Other:        getField(f,'Citation Number','Ticket Number'),
-    violation:         getField(f,'Violation Type','Violation'),
-    Court_Date:        getField(f,'Court Date','Court_Date'),
-    Court:        getField(f,'Jurisdiction','Court'),
-    officer:           getField(f,'Issuing Officer','Officer'),
-    notes:             getField(f,'Notes','notes'),
-    ...f
+    First_Name   : f['First Name']    || '',
+    Middle_Name  : f['Middle Name']   || '',
+    Last_Name    : f['Last Name']     || '',
+    Other        : f['Other']         || f['Ticket ID'] || '',
+    DOB          : f['DOB']           || '',
+    Court_Date   : f['Court Date']    || f['Citation Date'] || '',
+    Citation_Date: f['Citation Date'] || '',
+    Court        : f['Court']         || '',
+    County       : f['County']        || '',
+    Ticket_Type  : f['Ticket Type']   || '',
+    Notes        : f['Notes']         || '',
+    Source       : f['Source']        || '',
+    Contact_Date : f['Contact Date']  || '',
+    Violation_1  : violations[0]      || '',
+    Violation_2  : violations[1]      || '',
+    Violation_3  : violations[2]      || '',
+    Plea_1       : pleas[0]           || '',
+    Plea_2       : pleas[1]           || '',
+    Plea_3       : pleas[2]           || '',
+    date         : new Date().toLocaleDateString('en-US'),
   };
+
+  // Show loading indicator
+  const loader = document.createElement('div');
+  loader.id = 'gen-loader';
+  loader.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);z-index:9999;display:flex;align-items:center;justify-content:center;';
+  loader.innerHTML = '<div style="background:#fff;border-radius:12px;padding:24px 32px;font-family:Figtree,sans-serif;font-size:14px;color:#0f1f3d;text-align:center"><div style="font-size:24px;margin-bottom:10px">⚡</div>Generating document for ' + name + '...</div>';
+  document.body.appendChild(loader);
+
   try {
     const res = await fetch(API.dp, {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({templateId:tmplId, data:docData, format:'pdf'})
+      body:JSON.stringify({data:docData})
     });
     const data = await res.json();
-    if(data.error) throw new Error(data.error);
-    const link = data.document_url||data.url||data.download_url||'';
+    document.getElementById('gen-loader').remove();
+    if(data.error) throw new Error(JSON.stringify(data.error));
+    const link = (data.data && data.data.file_url) || data.file_url || data.document_url || data.url || '';
     if(link) {
-      if(confirm(`Document generated for ${name}!\n\nClick OK to open the download link.`)) window.open(link,'_blank');
+      window.open(link,'_blank');
+      alert('✓ Document generated for ' + name + '!\n\nThe PDF has opened in a new tab.');
     } else {
-      alert(`Document generated for ${name}!\n\nCheck your Docupilot dashboard for the download.`);
+      alert('✓ Document generated for ' + name + '!\nCheck your Docupilot dashboard for the download.');
     }
   } catch(e) {
-    alert(`Generation failed: ${e.message}`);
+    const ld = document.getElementById('gen-loader');
+    if(ld) ld.remove();
+    alert('Generation failed: ' + e.message);
   }
 }
+
 
 // ── TEST AIRTABLE ──
 async function testAT() {
