@@ -674,7 +674,7 @@ async function generateForRecord(recordId, name) {
   const ticketType = (f['Ticket Type'] || '').toLowerCase();
   
   const violations = parseViolations(f['Notes'] || '');
-  const tmplId = getTemplateForRecord(f);
+  const { tmplId, isCrim } = getTemplate(f);
 
   if(isCrim) {
     // Show plea selection modal
