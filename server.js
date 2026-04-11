@@ -4,7 +4,7 @@ const path = require('path');
 const app = express();
 
 app.use(express.json());
-app.use(express.static(__dirname));
+app.use(express.static(path.join(__dirname)));
 
 const AT_TOKEN = process.env.AIRTABLE_TOKEN;
 const AT_BASE  = process.env.AIRTABLE_BASE_ID || 'appZcKc43KfFhOUad';
@@ -66,13 +66,23 @@ app.post('/api/pipeline', async (req, res) => {
     const record = atData.records[0];
     const f = record.fields;
     const mapped = {
-      client_first_name: f['First Name']||'', client_last_name: f['Last Name']||'',
-      client_email: f['Email']||'', ticket_num: f['Citation Number']||'',
-      violation: f['Violation Type']||'', court_date: f['Court Date']||'',
-      court_name: f['Jurisdiction']||'', officer: f['Issuing Officer']||'',
-      notes: f['Notes']||'', ...f
+      client_first_name: f['First Name']||'',
+      client_last_name:  f['Last Name']||'',
+      client_middle:     f['Middle Name']||'',
+      ticket_num:        f['Other']||f['Ticket ID']||'',
+      violation:         f['Notes']||'',
+      court_date:        f['Court Date']||f['Citation Date']||'',
+      court_name:        f['Court']||'',
+      county:            f['County']||'',
+      ticket_type:       f['Ticket Type']||'',
+      source:            f['Source']||'',
+      ...f
     };
-    const steps = ['✓ Airtable record fetched: ' + record.id, '✓ ' + Object.keys(mapped).length + ' fields mapped'];
+    const steps = [
+      '✓ Airtable record fetched: ' + record.id,
+      '✓ ' + Object.keys(mapped).length + ' fields mapped',
+      '✓ Client: ' + (f['First Name']||'') + ' ' + (f['Last Name']||'')
+    ];
     const tmplId = req.body.templateId || process.env.DOCUPILOT_DEFAULT_TEMPLATE;
     if(!tmplId) return res.json({ success: true, steps, airtableRecord: record.id, warning: 'No template ID set' });
     const dpR = await fetch(`https://api.docupilot.app/api/v1/templates/${tmplId}/create-document/`, {
@@ -84,6 +94,10 @@ app.post('/api/pipeline', async (req, res) => {
     steps.push('✓ Document generated');
     res.json({ success: true, steps, airtableRecord: record.id, document: dpData });
   } catch(e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 app.listen(process.env.PORT || 3000, () => console.log('VerdictFlow running'));
