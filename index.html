@@ -732,15 +732,15 @@ function showCalendarPopup(name, f) {
         <button onclick="document.getElementById('cal-modal').remove()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#64748b">✕</button>
       </div>
       <div style="background:#f1f3f9;border-radius:10px;padding:14px;margin-bottom:16px;display:flex;flex-direction:column;gap:8px">
-        <div style="display:flex;gap:10px;font-size:13px"><span style="color:#64748b;min-width:80px">Client</span><span style="font-weight:600;color:#0f1f3d">\${name}</span></div>
-        <div style="display:flex;gap:10px;font-size:13px"><span style="color:#64748b;min-width:80px">Citation</span><span style="font-weight:600;color:#0f1f3d">\${citation}</span></div>
-        <div style="display:flex;gap:10px;font-size:13px"><span style="color:#64748b;min-width:80px">Violation</span><span style="color:#0f1f3d">\${violation}</span></div>
-        <div style="display:flex;gap:10px;font-size:13px"><span style="color:#64748b;min-width:80px">Court Date</span><span style="font-weight:600;color:\${gcalDate ? '#1d9e75' : '#d85a30'}">\${displayDate}</span></div>
+        <div style="display:flex;gap:10px;font-size:13px"><span style="color:#64748b;min-width:80px">Client</span><span style="font-weight:600;color:#0f1f3d">${name}</span></div>
+        <div style="display:flex;gap:10px;font-size:13px"><span style="color:#64748b;min-width:80px">Citation</span><span style="font-weight:600;color:#0f1f3d">${citation}</span></div>
+        <div style="display:flex;gap:10px;font-size:13px"><span style="color:#64748b;min-width:80px">Violation</span><span style="color:#0f1f3d">${violation}</span></div>
+        <div style="display:flex;gap:10px;font-size:13px"><span style="color:#64748b;min-width:80px">Court Date</span><span style="font-weight:600;color:${gcalDate ? '#1d9e75' : '#d85a30'}">${displayDate}</span></div>
         <div style="display:flex;gap:10px;font-size:13px"><span style="color:#64748b;min-width:80px">Court</span><span style="color:#0f1f3d">Las Vegas Justice Court</span></div>
       </div>
       <div style="display:flex;gap:10px;justify-content:flex-end">
         <button onclick="document.getElementById('cal-modal').remove()" style="padding:8px 16px;border-radius:8px;border:1px solid rgba(15,31,61,0.18);background:transparent;font-size:13px;cursor:pointer">Close</button>
-        <button onclick="window.open('\${calUrl}','_blank');document.getElementById('cal-modal').remove();"
+        <button onclick="window.open('${calUrl}','_blank');document.getElementById('cal-modal').remove();"
           style="padding:8px 16px;border-radius:8px;border:none;background:#0f1f3d;color:#fff;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px">
           📅 Add to Google Calendar
         </button>
