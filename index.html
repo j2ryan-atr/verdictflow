@@ -883,13 +883,13 @@ function submitWEPReply() {
   const reply = document.querySelector('input[name="wep-reply"]:checked');
   document.getElementById('wep-modal').remove();
   const replyVal = reply ? reply.value : '1';
-  const docData = Object.assign({}, _wepData.f, {
+  const extras = {
     Reply_1: replyVal === '1' ? '☒' : '☐',
     Reply_2: replyVal === '2' ? '☒' : '☐',
     Reply_3: replyVal === '3' ? '☒' : '☐',
     Reply_4: replyVal === '4' ? '☒' : '☐',
-  });
-  generateDoc(docData, _wepData.tmplId, _wepData.name, ['','','']);
+  };
+  generateDoc(_wepData.f, _wepData.tmplId, _wepData.name, ['','',''], [], extras);
 }
 
 function showWEPModal(name, f, tmplId) {
@@ -936,7 +936,7 @@ function showWEPModal(name, f, tmplId) {
   document.body.appendChild(modal);
 }
 
-async function generateDoc(f, tmplId, name, pleas, viols) {
+async function generateDoc(f, tmplId, name, pleas, viols, extras) {
   const violations = viols || parseViolations(f['Notes']||'');
   const docData = {
     First_Name   : f['First Name']    || '',
@@ -959,6 +959,7 @@ async function generateDoc(f, tmplId, name, pleas, viols) {
     Plea_2       : pleas[1]           || '',
     Plea_3       : pleas[2]           || '',
     date         : new Date().toLocaleDateString('en-US'),
+    ...(extras || {}),
   };
 
   // Show loading indicator
