@@ -671,23 +671,18 @@ async function generateForRecord(recordId, name) {
   if(!record) return;
   const f = record.fields;
   const court = f['Court'] || '';
-  const ticketType = (f['Ticket Type'] || '').toLowerCase();
-  
   const violations = parseViolations(f['Notes'] || '');
   const { tmplId, isCrim } = getTemplate(f);
 
   // LVJC Criminal — no document needed, just calendar
-  const court = f['Court'] || '';
   if(isCrim && (court.toUpperCase().includes('LVJC') || court.toUpperCase().includes('LVM'))) {
     showCalendarPopup(name, f);
     return;
   }
 
   if(isCrim) {
-    // Show plea selection modal for other criminal courts
     showPleaModal(name, violations, f, tmplId);
   } else {
-    // Civil — generate directly
     await generateDoc(f, tmplId, name, ['','','']);
   }
 }
