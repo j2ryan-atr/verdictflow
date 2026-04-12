@@ -80,7 +80,8 @@ app.get('/api/docupilot', async (req, res) => {
 
 app.post('/api/docupilot', async (req, res) => {
   try {
-    const { data: docData } = req.body;
+    const { data: docData, templateId } = req.body;
+    const tmpl = templateId || DP_TMPL;
     const url = getDpUrl(tmpl) + '?download=true';
     console.log('Docupilot URL:', url);
     console.log('Docupilot data:', JSON.stringify(docData));
