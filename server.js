@@ -1,3 +1,4 @@
+
 const express = require('express');
 const fetch = require('node-fetch');
 const path = require('path');
@@ -10,6 +11,7 @@ const AT_TOKEN  = process.env.AIRTABLE_TOKEN;
 const AT_BASE   = process.env.AIRTABLE_BASE_ID || 'appZcKc43KfFhOUad';
 const AT_TABLE  = process.env.AIRTABLE_TABLE   || 'Data';
 const DP_KEY    = process.env.DOCUPILOT_API_KEY;
+const DP_TMPL   = process.env.DOCUPILOT_DEFAULT_TEMPLATE || '105675';
 const BASE = 'https://lojr.docupilot.app/dashboard/documents/create/c190d67a/';
 const DP_URLS = {
   '105675': BASE + '212946f7', // LVJC Civil Infraction Response
