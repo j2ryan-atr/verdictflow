@@ -670,7 +670,6 @@ async function generateForRecord(recordId, name) {
   const record = allTickets.find(r=>r.id===recordId);
   if(!record) return;
   const f = record.fields;
-  const court = f['Court'] || '';
   const violations = parseViolations(f['Notes'] || '');
   const { tmplId, isCrim } = getTemplate(f);
 
