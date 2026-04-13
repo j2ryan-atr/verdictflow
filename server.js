@@ -1,4 +1,3 @@
-
 const express = require('express');
 const fetch = require('node-fetch');
 const path = require('path');
@@ -7,7 +6,15 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
 
+app.get('/', (req, res) => {
+  const fs = require('fs');
+  let html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
+  html = html.replace('<meta name="viewport"', '<meta name="app-pwd" content="' + APP_PWD + '"/><meta name="viewport"');
+  res.send(html);
+});
+
 const AT_TOKEN  = process.env.AIRTABLE_TOKEN;
+const APP_PWD   = process.env.APP_PASSWORD || 'VerdictFlow2024!';
 const AT_BASE   = process.env.AIRTABLE_BASE_ID || 'appZcKc43KfFhOUad';
 const AT_TABLE  = process.env.AIRTABLE_TABLE   || 'Data';
 const DP_KEY    = process.env.DOCUPILOT_API_KEY;
