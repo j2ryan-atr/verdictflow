@@ -144,12 +144,62 @@ html,body{height:100%;font-family:'Figtree',sans-serif;background:var(--bg);colo
 .ocrdrop{border:2px dashed var(--border2);border-radius:var(--r);padding:32px;text-align:center;cursor:pointer;transition:all .2s;background:#fafbfe}
 .ocrdrop:hover{border-color:var(--gold);background:var(--goldp)}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+
+.login-screen {
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  background:var(--navy);z-index:99999;
+  display:flex;align-items:center;justify-content:center;
+}
+.login-box {
+  background:#fff;border-radius:16px;padding:40px;
+  width:380px;max-width:95vw;text-align:center;
+}
+.login-logo {
+  width:48px;height:48px;background:var(--gold);border-radius:12px;
+  display:flex;align-items:center;justify-content:center;margin:0 auto 16px;
+}
+.login-logo svg{width:26px;height:26px;fill:var(--navy)}
+.login-title{font-family:'DM Serif Display',serif;font-size:24px;color:var(--navy);margin-bottom:4px}
+.login-sub{font-size:13px;color:var(--muted);margin-bottom:28px}
+.login-input{
+  width:100%;padding:11px 14px;border-radius:9px;
+  border:1px solid var(--border2);font-size:14px;
+  font-family:'Figtree',sans-serif;margin-bottom:12px;
+  text-align:center;letter-spacing:.15em;
+}
+.login-input:focus{outline:none;border-color:var(--navy);}
+.login-btn{
+  width:100%;padding:11px;border-radius:9px;border:none;
+  background:var(--navy);color:#fff;font-size:14px;
+  font-family:'Figtree',sans-serif;font-weight:600;
+  cursor:pointer;transition:background .15s;
+}
+.login-btn:hover{background:var(--navy2)}
+.login-err{
+  font-size:12px;color:var(--err);margin-top:8px;
+  display:none;
+}
+
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:rgba(15,31,61,0.15);border-radius:10px}
 </style>
 </head>
 <body>
+
+<div class="login-screen" id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <svg viewBox="0 0 20 20"><path d="M10 1L3 5v6c0 4.4 3 7.5 7 8.5 4-1 7-4.1 7-8.5V5L10 1zm-1 11.4l-2.7-2.7 1.1-1.1 1.6 1.6 3.6-3.6 1.1 1.1L9 12.4z"/></svg>
+    </div>
+    <div class="login-title">VerdictFlow</div>
+    <div class="login-sub">Law Offices of John Ryan, Ltd.<br>Enter your access password to continue</div>
+    <input class="login-input" type="password" id="login-pwd" placeholder="••••••••" onkeydown="if(event.key==='Enter')checkLogin()"/>
+    <button class="login-btn" onclick="checkLogin()">Sign In →</button>
+    <div class="login-err" id="login-err">Incorrect password. Please try again.</div>
+  </div>
+</div>
+
 <div class="shell">
 
   <!-- SIDEBAR -->
@@ -1186,7 +1236,40 @@ function saveSettings(){showRes('r-settings','ok','✓ Firm settings saved.');}
 
 // ── INIT ──
 initMapping();
-loadTickets();
+initAuth();
+// ── LOGIN ──
+const APP_PWD = 'VF-' + (window.location.hostname.includes('onrender') ? 'Ryan2024!' : 'dev');
+
+function checkLogin() {
+  const pwd = document.getElementById('login-pwd').value;
+  if(pwd === getAppPassword()) {
+    document.getElementById('login-screen').style.display = 'none';
+    sessionStorage.setItem('vf_auth', '1');
+    loadTickets();
+  } else {
+    document.getElementById('login-err').style.display = 'block';
+    document.getElementById('login-pwd').value = '';
+    document.getElementById('login-pwd').focus();
+  }
+}
+
+function getAppPassword() {
+  // Password set via meta tag injected by server
+  const meta = document.querySelector('meta[name="app-pwd"]');
+  return meta ? meta.content : 'VerdictFlow2024!';
+}
+
+function initAuth() {
+  if(sessionStorage.getItem('vf_auth') === '1') {
+    document.getElementById('login-screen').style.display = 'none';
+  } else {
+    // Don't auto-load tickets until logged in
+    return;
+  }
+  loadTickets();
+}
+
+
 </script>
 </body>
 </html>
