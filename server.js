@@ -4,14 +4,16 @@ const path = require('path');
 const app = express();
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname)));
-
+// Serve index.html with injected password
 app.get('/', (req, res) => {
   const fs = require('fs');
   let html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
   html = html.replace('<meta name="viewport"', '<meta name="app-pwd" content="' + APP_PWD + '"/><meta name="viewport"');
   res.send(html);
 });
+
+// Serve other static files
+app.use(express.static(path.join(__dirname)));
 
 const AT_TOKEN  = process.env.AIRTABLE_TOKEN;
 const APP_PWD   = process.env.APP_PASSWORD || 'VerdictFlow2024!';
