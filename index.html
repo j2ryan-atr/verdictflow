@@ -884,10 +884,10 @@ function submitWEPReply() {
   document.getElementById('wep-modal').remove();
   const replyVal = reply ? reply.value : '1';
   const extras = {
-    Reply_1: replyVal === '1' ? '☒' : '☐',
-    Reply_2: replyVal === '2' ? '☒' : '☐',
-    Reply_3: replyVal === '3' ? '☒' : '☐',
-    Reply_4: replyVal === '4' ? '☒' : '☐',
+    Reply_1: replyVal === '1' ? '[X]' : '[  ]',
+    Reply_2: replyVal === '2' ? '[X]' : '[  ]',
+    Reply_3: replyVal === '3' ? '[X]' : '[  ]',
+    Reply_4: replyVal === '4' ? '[X]' : '[  ]',
   };
   generateDoc(_wepData.f, _wepData.tmplId, _wepData.name, ['','',''], [], extras);
 }
