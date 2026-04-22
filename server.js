@@ -79,6 +79,20 @@ app.post('/api/airtable', async (req, res) => {
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
+// PATCH - update existing Airtable record
+app.patch('/api/airtable/:recordId', async (req, res) => {
+  try {
+    const { recordId } = req.params;
+    const r = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${encodeURIComponent(AT_TABLE)}/${recordId}`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${AT_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fields: req.body.fields })
+    });
+    const data = await r.json();
+    res.json(data);
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 app.get('/api/docupilot', async (req, res) => {
   try {
     const r = await fetch('https://api.docupilot.app/api/v1/templates/', {
