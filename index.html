@@ -299,7 +299,7 @@ html,body{height:100%;font-family:'Figtree',sans-serif;background:var(--bg);colo
             <button class="btn btn-g btn-sm" onclick="nav('new')">+ Add Ticket</button>
           </div>
           <table class="tbl">
-            <thead><tr><th>Client</th><th>Ticket #</th><th>Violation</th><th>Court Date</th><th>Doc Status</th><th></th></tr></thead>
+            <thead><tr><th>Client</th><th>Ticket #</th><th>Violation</th><th>Court</th><th>Court Date</th><th>Sent</th><th></th></tr></thead>
             <tbody id="tickets-tbl"><tr><td colspan="6" style="text-align:center;padding:32px;color:var(--muted)">Loading from Airtable…</td></tr></tbody>
           </table>
         </div>
@@ -687,6 +687,13 @@ function renderTickets(filter=''){
     const name=(getField(f,'First Name','Name','')+' '+getField(f,'Last Name','')).toLowerCase();
     const ticket=(getField(f,'Citation Number','Ticket Number','')).toLowerCase();
     return name.includes(q)||ticket.includes(q);
+  }).sort((a,b)=>{
+    const courtA=(a.fields['Court']||'').toLowerCase();
+    const courtB=(b.fields['Court']||'').toLowerCase();
+    if(courtA!==courtB) return courtA.localeCompare(courtB);
+    const ttA=(a.fields['Ticket Type']||'').toLowerCase();
+    const ttB=(b.fields['Ticket Type']||'').toLowerCase();
+    return ttA.localeCompare(ttB);
   });
   if(!list.length){
     tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--muted)">No tickets found</td></tr>';
@@ -699,12 +706,18 @@ function renderTickets(filter=''){
     const ticket=getField(f,'Other','Citation Number','Ticket Number','Other','Ticket ID');
     const viol=getField(f,'Notes','Violation Type','Violation','violation');
     const court=getField(f,'Court Date','Court_Date');
+    const sentStatus = f['Status'] || '';
+    const sentBadge = sentStatus === 'Sent'
+      ? '<span style="font-size:11px;color:#085041;background:#e1f5ee;border:1px solid #9fe1cb;border-radius:4px;padding:2px 7px;font-weight:600">✅ Sent</span>'
+      : '<button class="btn btn-xs" onclick="markAsSent(this)" data-id="' + r.id + '" style="padding:4px 9px;font-size:11px;border-radius:6px;border:1px solid #ccc;background:#f9f9f9;color:#555;cursor:pointer">Mark Sent</button>';
+    const courtName = f['Court'] || '—';
     return`<tr>
       <td><div style="display:flex;align-items:center;gap:8px"><div class="av">${ini(fn,ln)}</div><div><div style="font-weight:500">${fn} ${ln}</div><div style="font-size:11px;color:var(--muted)">${getField(f,'Email','email')}</div></div></div></td>
       <td><span class="tnum">${ticket||r.id}</span></td>
       <td style="font-size:12px">${viol||'—'}</td>
+      <td style="font-size:12px;color:var(--muted)">${courtName}</td>
       <td style="font-size:12px;color:var(--muted)">${court||'—'}</td>
-      <td>${bdg('warn','Draft')}</td>
+      <td>${sentBadge}</td>
       <td>${getGenerateBtn(r)}</td>
     </tr>`;
   }).join('');
@@ -766,6 +779,33 @@ function parseViolations(notes) {
   if(parts.length <= 1) parts = notes.split(/[;]\s*/).map(p=>p.trim()).filter(p=>p);
   while(parts.length < 3) parts.push('');
   return parts.slice(0,3);
+}
+
+
+async function markAsSent(btn) {
+  const recordId = btn.dataset.id;
+  const now = new Date().toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+  btn.textContent = 'Saving...';
+  btn.disabled = true;
+  try {
+    const res = await fetch(API.at + '/' + recordId, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fields: { 'Status': 'Sent', 'Last Modified': new Date().toISOString() } })
+    });
+    const data = await res.json();
+    if(data.error) throw new Error(data.error.message || data.error);
+    // Update local record
+    const rec = allTickets.find(r => r.id === recordId);
+    if(rec) rec.fields['Status'] = 'Sent';
+    // Replace button with sent badge
+    const td = btn.parentElement;
+    td.innerHTML = '<span style="font-size:11px;color:#085041;background:#e1f5ee;border:1px solid #9fe1cb;border-radius:4px;padding:2px 7px;font-weight:600">✅ Sent</span>';
+  } catch(e) {
+    btn.textContent = 'Mark Sent';
+    btn.disabled = false;
+    alert('Could not save: ' + e.message);
+  }
 }
 
 async function generateForRecord(btnOrId) {
