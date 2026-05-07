@@ -938,7 +938,7 @@ function showPleaModal(name, violations, fields, tmplId) {
       <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px">
         <button onclick="document.getElementById('plea-modal').remove()" 
           style="padding:8px 16px;border-radius:8px;border:1px solid rgba(15,31,61,0.18);background:transparent;font-size:13px;font-family:Figtree,sans-serif;cursor:pointer">Cancel</button>
-        <button onclick="submitCurrentPlea(('${name}', ${JSON.stringify(fields).replace(/'/g,"\'")},'${tmplId}')"
+        <button onclick="submitCurrentPlea()"
           style="padding:8px 16px;border-radius:8px;border:none;background:#c9a84c;color:#0f1f3d;font-size:13px;font-weight:600;font-family:Figtree,sans-serif;cursor:pointer">
           Generate Document ⚡
         </button>
