@@ -1,11 +1,10 @@
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
 <meta name="app-pwd" content="Cactus969!"/>
-<meta name="app-pwd" content="Cactus969!"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>VerdictFlow — Traffic Defense Platform</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Figtree:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <style>
@@ -211,6 +210,7 @@ tr.court-group-hdr td {
       <div class="ni on" data-panel="dashboard"><svg class="niico" viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5"/><rect x="1" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/></svg>Dashboard</div>
       <div class="ni" data-panel="tickets"><svg class="niico" viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h12v1.5H2V2zm0 4h12v1.5H2V6zm0 4h9v1.5H2V10z"/></svg>Tickets<span class="nbadge" id="badge-tickets">0</span></div>
       <div class="ni" data-panel="new"><svg class="niico" viewBox="0 0 16 16" fill="currentColor"><path d="M8 2a.75.75 0 01.75.75v4.5h4.5a.75.75 0 010 1.5h-4.5v4.5a.75.75 0 01-1.5 0v-4.5H2.75a.75.75 0 010-1.5h4.5v-4.5A.75.75 0 018 2z"/></svg>New Ticket</div>
+      <div class="ni" data-panel="tofile"><svg class="niico" viewBox="0 0 16 16" fill="currentColor"><path d="M3 1h7.5L14 4.5V15H3V1zm7 0v4h4M5 7h6M5 9.5h6M5 12h4"/></svg>To File<span class="nbadge" id="badge-tofile" style="background:#c2410c;color:#fff;display:none">!</span></div>
     </div>
     <div class="ssec">
       <div class="slbl">Automation</div>
@@ -234,6 +234,7 @@ tr.court-group-hdr td {
       <span class="tbtitle" id="ptitle">Dashboard</span>
       <div style="display:flex;gap:8px">
         <button class="btn btn-o btn-sm" onclick="nav('api')">API Status</button>
+        <button class="btn btn-sm" onclick="runToFile()" style="background:#c2410c;color:#fff;border:none;">📋 To File</button>
         <button class="btn btn-g btn-sm" onclick="nav('new')">+ New Ticket</button>
       </div>
     </div>
@@ -480,6 +481,45 @@ tr.court-group-hdr td {
         </div>
       </div>
 
+      <!-- TO FILE -->
+      <div class="panel" id="p-tofile">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+          <div>
+            <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--navy)">To File Report</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px" id="tofile-meta">Civil infractions · Clark County courts · sorted by urgency</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span style="font-size:12px;color:var(--muted)" id="tofile-timestamp"></span>
+            <button class="btn btn-o btn-sm" onclick="runToFile()">↻ Refresh</button>
+            <button class="btn btn-sm" onclick="window.print()" style="background:#0f1f3d;color:#fff;border:none">🖨 Print</button>
+          </div>
+        </div>
+
+        <!-- URGENT SECTION -->
+        <div class="card" id="tofile-urgent-card">
+          <div class="ch" style="background:#fff5f0;border-bottom:1px solid #fcd5c0">
+            <span class="ct" style="color:#c2410c">🚨 Urgent — 25 Days or Less Remaining</span>
+            <span class="bdg" id="tofile-urgent-count" style="background:#c2410c;color:#fff">0</span>
+          </div>
+          <table class="tbl">
+            <thead><tr><th>Client</th><th>Citation #</th><th>Citation Date</th><th>Court</th><th>Ticket Type</th><th>Days Left</th><th>Status</th></tr></thead>
+            <tbody id="tofile-urgent-tbl"><tr><td colspan="7" style="text-align:center;padding:20px;color:var(--muted)">Run report to load…</td></tr></tbody>
+          </table>
+        </div>
+
+        <!-- ALL CIVIL CLARK COUNTY -->
+        <div class="card">
+          <div class="ch">
+            <span class="ct">All Civil Infractions — Clark County Courts</span>
+            <span class="bdg bdg-info" id="tofile-all-count">0 tickets</span>
+          </div>
+          <table class="tbl">
+            <thead><tr><th>Client</th><th>Citation #</th><th>Citation Date</th><th>Court</th><th>Ticket Type</th><th>Days Left</th><th>Status</th></tr></thead>
+            <tbody id="tofile-all-tbl"><tr><td colspan="7" style="text-align:center;padding:20px;color:var(--muted)">Run report to load…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
       <!-- SETTINGS -->
       <div class="panel" id="p-settings">
         <div class="card">
@@ -523,7 +563,8 @@ const API = { at: '/api/airtable', dp: '/api/docupilot', pipe: '/api/pipeline' }
 const panelTitles = {
   dashboard:'Dashboard',tickets:'Tickets',new:'New Ticket',
   docs:'Document Templates',api:'API Integrations',
-  mapping:'Field Mapping',ocr:'OCR Citations',settings:'Firm Settings'
+  mapping:'Field Mapping',ocr:'OCR Citations',settings:'Firm Settings',
+  tofile:'To File Report'
 };
 const defaultMappings = [
   ['First Name','First_Name'],['Last Name','Last_Name'],
@@ -1194,6 +1235,111 @@ function initAuth() {
     document.getElementById('login-screen').style.display = 'none';
   } else { return; }
   loadTickets();
+}
+
+// ── TO FILE REPORT ──
+const CLARK_COUNTY_COURTS = ['lvjc','lvm','lvmc','henderson','north las vegas','nlv','boulder','laughlin','goodsprings','gsp','searchlight','slt','moapa','bunkerville','mesquite','justice court'];
+const CIVIL_TICKET_TYPES_EXCLUDE = ['crim','criminal','dwi','dui'];
+
+function isClarkCountyCivil(f) {
+  const court = (f['Court'] || '').toLowerCase();
+  const tt = (f['Ticket Type'] || '').toLowerCase();
+  const isCrim = CIVIL_TICKET_TYPES_EXCLUDE.some(c => tt.includes(c));
+  if(isCrim) return false;
+  return CLARK_COUNTY_COURTS.some(c => court.includes(c));
+}
+
+function daysUntil90(f) {
+  if(!f['Citation Date']) return null;
+  const citDate = new Date(f['Citation Date']);
+  if(isNaN(citDate)) return null;
+  const deadline = new Date(citDate);
+  deadline.setDate(deadline.getDate() + 90);
+  const today = new Date();
+  return Math.ceil((deadline - today) / (1000 * 60 * 60 * 24));
+}
+
+function toFileDaysCell(days) {
+  if(days === null) return '<span style="color:var(--muted)">—</span>';
+  if(days <= 0) return '<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:#faece7;color:#c2410c;border:1px solid #f5c4b3">EXPIRED</span>';
+  if(days <= 10) return '<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:#fef2f2;color:#dc2626;border:1px solid #fca5a5">🔴 '+days+'d</span>';
+  if(days <= 25) return '<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:#fff7ed;color:#c2410c;border:1px solid #fed7aa">🟠 '+days+'d</span>';
+  if(days <= 90) return '<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:#f0fdf4;color:#166534;border:1px solid #bbf7d0">🟢 '+days+'d</span>';
+  return '<span style="color:var(--muted);font-size:12px">'+days+'d</span>';
+}
+
+function toFileRow(r, days) {
+  const f = r.fields;
+  const fn = getField(f,'First Name','first_name','Name','Client');
+  const ln = getField(f,'Last Name','last_name','');
+  const ticket = getField(f,'Other','Citation Number','Ticket Number','Ticket ID');
+  const citDate = f['Citation Date'] || '—';
+  const court = f['Court'] || '—';
+  const tt = f['Ticket Type'] || '—';
+  const status = f['Status'] || 'Pending';
+  const statusBadge = status === 'Sent'
+    ? '<span style="font-size:11px;color:#085041;background:#e1f5ee;border:1px solid #9fe1cb;border-radius:4px;padding:2px 7px;font-weight:600">✅ Sent</span>'
+    : '<span style="font-size:11px;color:#854f0b;background:#faeeda;border:1px solid #fac775;border-radius:4px;padding:2px 7px;font-weight:600">Pending</span>';
+  const cc = courtClass(court);
+  return '<tr class="court-row '+cc+'">'
+    +'<td style="font-weight:500">'+fn+' '+ln+'</td>'
+    +'<td><span class="tnum">'+(ticket||r.id)+'</span></td>'
+    +'<td style="font-size:12px">'+citDate+'</td>'
+    +'<td><span class="court-badge '+cc+'">'+court+'</span></td>'
+    +'<td style="font-size:12px">'+tt+'</td>'
+    +'<td>'+toFileDaysCell(days)+'</td>'
+    +'<td>'+statusBadge+'</td>'
+    +'</tr>';
+}
+
+function runToFile() {
+  nav('tofile');
+  const now = new Date();
+  document.getElementById('tofile-timestamp').textContent = 'Run: '+now.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+' '+now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+
+  if(!allTickets.length) {
+    ['tofile-urgent-tbl','tofile-all-tbl'].forEach(id=>{
+      document.getElementById(id).innerHTML='<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--err)">No tickets loaded — sync Airtable first.</td></tr>';
+    });
+    return;
+  }
+
+  // Filter: Clark County civil only
+  const civil = allTickets
+    .filter(r => isClarkCountyCivil(r.fields))
+    .map(r => ({ r, days: daysUntil90(r.fields) }))
+    .sort((a,b) => {
+      // nulls last, expired first, then ascending days
+      if(a.days === null) return 1;
+      if(b.days === null) return -1;
+      return a.days - b.days;
+    });
+
+  // Urgent: 25 days or less (including expired)
+  const urgent = civil.filter(({days}) => days !== null && days <= 25);
+
+  // Render urgent
+  const urgentTbl = document.getElementById('tofile-urgent-tbl');
+  document.getElementById('tofile-urgent-count').textContent = urgent.length + ' ticket' + (urgent.length!==1?'s':'');
+  if(urgent.length) {
+    urgentTbl.innerHTML = urgent.map(({r,days})=>toFileRow(r,days)).join('');
+  } else {
+    urgentTbl.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--ok);font-weight:600">✅ No tickets approaching the 90-day deadline</td></tr>';
+  }
+
+  // Render all
+  const allTbl = document.getElementById('tofile-all-tbl');
+  document.getElementById('tofile-all-count').textContent = civil.length + ' ticket' + (civil.length!==1?'s':'');
+  if(civil.length) {
+    allTbl.innerHTML = civil.map(({r,days})=>toFileRow(r,days)).join('');
+  } else {
+    allTbl.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--muted)">No civil Clark County tickets found.</td></tr>';
+  }
+
+  // Show badge if urgent items exist
+  const badge = document.getElementById('badge-tofile');
+  if(urgent.length) { badge.style.display='inline-flex'; badge.textContent=urgent.length; }
+  else badge.style.display='none';
 }
 
 // ── INIT ──
