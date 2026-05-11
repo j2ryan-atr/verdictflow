@@ -1037,17 +1037,53 @@ async function generateDoc(f, tmplId, name, pleas, viols, extras) {
     document.getElementById('gen-loader').remove();
     if(data.error) throw new Error(JSON.stringify(data.error));
     const link = (data.data && data.data.file_url) || data.file_url || data.document_url || data.url || '';
-    if(link) {
-      window.open(link,'_blank');
-      alert('✓ Document generated for '+name+'!\n\nThe PDF has opened in a new tab.');
-    } else {
-      alert('✓ Document generated for '+name+'!\nCheck your Docupilot dashboard for the download.');
-    }
+    showDownloadModal(name, link);
   } catch(e) {
     const ld = document.getElementById('gen-loader');
     if(ld) ld.remove();
-    alert('Generation failed: ' + e.message);
+    showDownloadModal(name, '', e.message);
   }
+}
+
+function showDownloadModal(name, link, err) {
+  const existing = document.getElementById('dl-modal');
+  if(existing) existing.remove();
+  const modal = document.createElement('div');
+  modal.id = 'dl-modal';
+  modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
+  let body = '';
+  if(err) {
+    body = '<div style="background:#faece7;border:1px solid #f5c4b3;border-radius:10px;padding:16px;text-align:center;margin-bottom:18px">'
+      +'<div style="font-size:24px;margin-bottom:8px">&#9888;</div>'
+      +'<div style="font-weight:600;color:#c2410c;margin-bottom:4px">Generation Failed</div>'
+      +'<div style="font-size:12px;color:#7f1d1d">'+err+'</div>'
+      +'</div>';
+  } else if(link) {
+    body = '<div style="background:#e1f5ee;border:1px solid #9fe1cb;border-radius:10px;padding:20px;text-align:center;margin-bottom:18px">'
+      +'<div style="font-size:36px;margin-bottom:10px">&#128196;</div>'
+      +'<div style="font-weight:700;color:#085041;font-size:16px;margin-bottom:4px">Document Ready!</div>'
+      +'<div style="font-size:13px;color:#166534;margin-bottom:16px">Generated for <strong>'+name+'</strong></div>'
+      +'<a href="'+link+'" target="_blank" style="display:inline-flex;align-items:center;gap:8px;padding:11px 28px;background:#1d9e75;color:#fff;border-radius:8px;font-weight:700;font-size:14px;text-decoration:none;font-family:Figtree,sans-serif">&#11015; Download PDF</a>'
+      +'<div style="font-size:11px;color:#166534;margin-top:10px">Link not opening? <a href="'+link+'" target="_blank" style="color:#085041;font-weight:600;text-decoration:underline">Click here</a></div>'
+      +'</div>';
+  } else {
+    body = '<div style="background:#faeeda;border:1px solid #fac775;border-radius:10px;padding:16px;text-align:center;margin-bottom:18px">'
+      +'<div style="font-size:32px;margin-bottom:8px">&#10003;</div>'
+      +'<div style="font-weight:700;color:#854f0b;font-size:15px;margin-bottom:4px">Document Generated</div>'
+      +'<div style="font-size:12px;color:#854f0b">For <strong>'+name+'</strong> &mdash; check your Docupilot dashboard to download.</div>'
+      +'</div>';
+  }
+  modal.innerHTML = '<div style="background:#fff;border-radius:14px;padding:24px;width:440px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,0.3);font-family:Figtree,sans-serif">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">'
+    +'<div style="font-family:\'DM Serif Display\',serif;font-size:20px;color:#0f1f3d">Document Generation</div>'
+    +'<button onclick="document.getElementById(\'dl-modal\').remove()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#64748b">&#10005;</button>'
+    +'</div>'
+    +body
+    +'<div style="display:flex;justify-content:flex-end">'
+    +'<button onclick="document.getElementById(\'dl-modal\').remove()" style="padding:8px 20px;border-radius:8px;border:1px solid rgba(15,31,61,0.18);background:transparent;font-size:13px;cursor:pointer;font-family:Figtree,sans-serif">Close</button>'
+    +'</div>'
+    +'</div>';
+  document.body.appendChild(modal);
 }
 
 async function testAT() {
@@ -1227,8 +1263,6 @@ function checkLogin() {
   }
 }
 function getAppPassword() {
-  const meta = document.querySelector('meta[name="app-pwd"]');
-  if(meta && meta.content && meta.content !== 'Cactus969!') return meta.content;
   return 'Cactus969!';
 }
 function initAuth() {
